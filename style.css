@@ -1,0 +1,152 @@
+body {
+    Helvetica, Arial, sans-serif;
+    font-size:13px;
+    color:    #333;
+	/*background-color:red;*/
+	overflow:hidden;
+}
+
+.textb {
+	width:165px;
+}
+
+a {color: #333;}
+
+#wrapper {
+}
+#wrapper div {
+    padding: 5px;
+}
+#footer{
+    position:absolute;bottom:0px;right:0;
+    color:#fff;
+}
+div#login_items{
+	background: transparent url('images/bg/fade2.png') no-repeat 0 0;
+	width: 404px;
+	height: 380px;
+	padding-top: 121px;
+	padding-left: 70px;
+}
+#messages div{
+	position:absolute;
+	padding:0;
+}
+
+#main, #progress, #message, #invalid_login {
+    /*display: none;*/
+}
+ul{
+	list-style:none;
+}
+#wrapper div#main{
+	padding:0;
+    overflow: hidden; 
+    background-color: white;
+    
+}
+#main ul{
+	/*position:absolute;top:0;right:0;*/
+	padding:0;
+	margin:0
+}
+#main ul.sections{
+	/*position: absolute;
+    bottom: 25px;
+    right: 0px;*/
+	position: absolute;
+    right: 0px;
+    top: 136px;
+}
+#main ul.sections li{
+	height: 340px; 
+	float: left;
+	position:relative;
+}
+#main ul.sections li.inner{
+	width: 500px;
+	z-index: 1;
+	
+}
+#main ul.sections li.timer{
+    background: transparent url('images/timer_bg.png') no-repeat -7px 1px;
+    width: 110px;
+    z-index:2;
+    top: 18px;
+}
+#main ul.sections li.pull_tab{
+    background: transparent url('images/pull_tab_close.png') no-repeat 1px 0px;
+    cursor: pointer;
+    width: 31px;
+	top: 16px;
+	
+}
+
+    #main ul.sections li.inner li{
+    	width: 501px;
+		float: left;
+    }
+	.alert_message{
+		width: 245px;
+		height: 110px;
+		border: 1px solid #666;
+		background-color: yellow;
+		position: absolute;
+		top: -86px;
+		left: 165px;
+		z-index:-1;
+	}
+	.close_message{
+		position: absolute;
+        top: 4px;
+        left: 240px;
+        text-decoration: none;
+	}
+	#main ul.sections li.inner li.drop_tab{
+		/*height:25px;*/
+		height: 75px;
+		position: relative;
+		z-index:1;
+		top: 0px;
+	}
+	#main ul.sections li.inner li.open_drop_tab{
+        top: -50px;
+    }
+	#main ul.sections li.inner div.details{
+		height:40px;
+		width: 489px; 
+		background-color:#fff;
+		border: 1px solid #666;
+	}
+	#main ul.sections li.inner li.chart{
+		background: transparent url('images/inner_bg.png') no-repeat 0px 0px;
+		margin-top: 25px;
+        z-index:2;
+		position: absolute;
+	}
+	
+	#main ul.sections li.inner div.tab_link{
+		background: transparent url('images/drop_tab_open.png') no-repeat 0px 0px;
+		cursor: pointer;
+	    height: 24px;
+		padding: 0;
+	}
+	#main ul.sections li.inner div.close_tab_link{
+        background: transparent url('images/drop_tab_close.png') no-repeat 0px 3px;
+		cursor: pointer;
+    }
+	.pull_tab:hover, .tab_link:hover{
+		opacity:0.8;
+	}
+	#main ul.sections li.close_tab{
+        background: transparent url('images/pull_tab_open.png') no-repeat 1px 0px;
+    }
+
+
+
+.inputlbl {
+    width: 82px;
+    display: block;
+    float: left;
+    text-align: left;
+}
