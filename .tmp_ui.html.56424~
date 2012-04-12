@@ -1,30 +1,16 @@
-<html>
-	<head>
-		<title>MIDC</title>
-		<link rel="stylesheet" type="text/css" href="css/xsmall.css" />
+<html class=" js csstransforms3d">
+    <head>
+        <title>MIDC</title>
+		<link rel="stylesheet" type="text/css" href="css/small.css" />
         <link rel="stylesheet" type="text/css" href="css/style.css" />
-        
-		<script type="text/javascript" src="lib/air/AIRAliases.js"></script>
-		<script type="text/javascript" src="lib/air/AIRIntrospector.js"></script>
-		<script type="application/x-shockwave-flash" src="lib/air/applicationUpdater.swf"/>
-		<script type="application/x-shockwave-flash" src="lib/air/applicationupdater_ui.swf"/>
-		<script type="application/x-shockwave-flash" src="lib/air/aircore.swf"/>
-		
 		<!-- Counter script -->
         <script type="text/javascript" src="js/flipcounter.js"></script>
-		
+        
 		<script type="text/javascript" src="js/jquery.js"></script>
 		<script type="text/javascript" src="js/jquery-ui.js"></script>
-		<script type="text/javascript" src="js/logic.js"></script>
-		
-		
-		
-		
-	</head>
-	<body onload="doLoad('app');">
-		
-		      
-        
+        <script type="text/javascript" src="js/logic.js"></script>
+    </head>
+    <body onload="doLoad();">
         <div id="wrapper">
             <!-- login_items --
             <div id="login_items">
@@ -72,45 +58,30 @@
             </div>
             --END #login_items -->
             <div id="main">
-                
+            	
                 <ul class="sections">
                     <li class="pull_tab close_all">
                     </li>
                     <li class="inner">
-                        <ul class="inner_content">
-                            <li class="drop_tab">
-                                <div class="alert_message">message <a href="#" class="close_message">X</a></div>
-                                <div class="tab_link"></div>
-                                <div class="details">details</div>
-                                
-                            </li>
-                            <li class="chart">
-                               chart    
-                            </li>
-                        </ul>
+	                    <ul class="inner_content">
+							<li class="drop_tab">
+								<div class="alert_message">message <a href="#" class="close_message">X</a></div>
+								<div class="tab_link"></div>
+								<div class="details">details</div>
+								
+	                        </li>
+	                        <li class="chart">
+	                           chart	
+	                        </li>
+						</ul>
                     </li>
                     <li class="timer">
-                        <span class="timer_lbl steps">Steps</span>
-                        <div id="stepsflip-counter" class="timer steps"></div>
-                        
-                        <span class="timer_lbl calories">Calories</span>
-                        <div id="caloriesflip-counter" class="timer calories"></div>
-                        
-                        <span class="timer_lbl distance">Distance</span>
-                        <div id="distanceflip-counter" class="timer distance"></div>
-                        
-                        <span class="timer_lbl time">Time</span>
-                        <div id="timeflip-counter" class="timer">
-                            <div id="timeMinflip-counter" class="timer time"></div>
-                            <span class="digit-separator">:</span>
-                            <div id="timeSecflip-counter" class="timer time"></div>
-                        </div>
+                    	<div id="flip-counter" class="small">
                     </li>
                 </ul>
             </div>
             <!-- #main -->
             <!--#wrapper-->
         </div>
-        
     </body>
 </html>

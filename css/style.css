@@ -1,11 +1,14 @@
 body {
-    Helvetica, Arial, sans-serif;
-    font-size:13px;
+    font-family: Arial;
+	font-size:13px;
     color:    #333;
-	/*background-color:red;*/
+	background-color:red;
 	overflow:hidden;
 }
-
+em{
+	font-size:18px;
+	font-style:italic;
+}
 .textb {
 	width:165px;
 }
@@ -15,7 +18,7 @@ a {color: #333;}
 #wrapper {
 }
 #wrapper div {
-    padding: 5px;
+    /*padding: 5px;*/
 }
 #footer{
     position:absolute;bottom:0px;right:0;
@@ -45,11 +48,12 @@ ul{
     background-color: white;
     
 }
-#main ul{
+#main ul.inner_content{
 	/*position:absolute;top:0;right:0;*/
 	padding:0;
 	margin:0
 }
+
 #main ul.sections{
 	/*position: absolute;
     bottom: 25px;
@@ -57,15 +61,18 @@ ul{
 	position: absolute;
     right: 0px;
     top: 136px;
+	padding:0;
+    margin:0
 }
-#main ul.sections li{
+#main ul.sections li.inner,
+#main ul.sections li.timer,
+#main ul.sections li.pull_tab {
 	height: 340px; 
 	float: left;
 	position:relative;
 }
 #main ul.sections li.inner{
 	width: 500px;
-	z-index: 1;
 	
 }
 #main ul.sections li.timer{
@@ -74,6 +81,14 @@ ul{
     z-index:2;
     top: 18px;
 }
+    #main ul.sections li.timer span.timer_lbl {
+		font-size: 12px;
+		margin-top: 20px;
+		display: block;
+		text-align: right;
+		margin-right: 5px;
+		color: #fff;
+    }    
 #main ul.sections li.pull_tab{
     background: transparent url('images/pull_tab_close.png') no-repeat 1px 0px;
     cursor: pointer;
@@ -90,11 +105,12 @@ ul{
 		width: 245px;
 		height: 110px;
 		border: 1px solid #666;
-		background-color: yellow;
 		position: absolute;
 		top: -86px;
 		left: 165px;
 		z-index:-1;
+		padding: 5px;
+		background-color:#fff;
 	}
 	.close_message{
 		position: absolute;
@@ -106,7 +122,6 @@ ul{
 		/*height:25px;*/
 		height: 75px;
 		position: relative;
-		z-index:1;
 		top: 0px;
 	}
 	#main ul.sections li.inner li.open_drop_tab{
@@ -117,11 +132,12 @@ ul{
 		width: 489px; 
 		background-color:#fff;
 		border: 1px solid #666;
+		padding: 5px;
 	}
 	#main ul.sections li.inner li.chart{
+		height: 340px;
 		background: transparent url('images/inner_bg.png') no-repeat 0px 0px;
 		margin-top: 25px;
-        z-index:2;
 		position: absolute;
 	}
 	

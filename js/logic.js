@@ -2,9 +2,21 @@
 function doLoad(env){
 	//$("#wrapper).delay(2000).fadeIn("slow");
     if (env == "app") {
-                    window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
-                    window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
-                }
+        window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
+        window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
+    }
+	
+	// Initialize Steps counter
+    var stepsCounter = new flipCounter('stepsflip-counter', {value:0, inc:1, pace:1000, auto:true, precision:5});
+	// Initialize Calorie counter
+    var calorieCounter = new flipCounter('caloriesflip-counter', {value:0, inc:1, pace:1000, auto:true, precision:4});
+	// Initialize Distance counter
+    var distanceCounter = new flipCounter('distanceflip-counter', {value:0, inc:1, pace:1000, auto:true, precision:4});
+	// Initialize Time Seconds counter
+    var timeSecCounter = new flipCounter('timeSecflip-counter', {value:0, inc:1, pace:1000, auto:true, precision:2, maxCount:60});
+	// Initialize Time Minute counter
+    var timeMinCounter = new flipCounter('timeMinflip-counter', {value:0, inc:1, pace:61000, auto:true, precision:2});
+	
 	//click handlers
 	$('#signin').click(function(){
 		
@@ -49,24 +61,6 @@ function doLoad(env){
 		
         return false;
     });
-    /*$(".timer").live('click', function(){
-        
-        $(".inner").animate({width:"500px"}, "fast", function(){
-            //$(".chart_items").show();
-            $(".pull_tab").addClass("close_tab");
-        });
-    });
-    $(".close_tab").live('click', function(){
-        
-        $(".inner").animate({width:"0px"}, "fast", function(){
-            //$(".chart_items").hide();
-            $(".pull_tab").removeClass("clock_open");
-            $(".timer").animate({width:"0px"}, "fast", function(){
-                $(".pull_tab").removeClass("close_tab");
-            });
-            
-        });
-    });*/
 	
 	$(".tab_link").click(function(){
 		if($(".drop_tab").hasClass("open_drop_tab")){

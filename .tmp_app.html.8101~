@@ -1,7 +1,7 @@
 <html>
 	<head>
 		<title>MIDC</title>
-		<link rel="stylesheet" type="text/css" href="css/xsmall.css" />
+		<link rel="stylesheet" type="text/css" href="css/small.css" />
         <link rel="stylesheet" type="text/css" href="css/style.css" />
         
 		<script type="text/javascript" src="lib/air/AIRAliases.js"></script>
@@ -21,7 +21,7 @@
 		
 		
 	</head>
-	<body onload="doLoad('app');">
+	<body onload="doLoad('app');"  class="js csstransforms3d">
 		
 		      
         
@@ -89,22 +89,8 @@
                             </li>
                         </ul>
                     </li>
-                    <li class="timer">
-                        <span class="timer_lbl steps">Steps</span>
-                        <div id="stepsflip-counter" class="timer steps"></div>
-                        
-                        <span class="timer_lbl calories">Calories</span>
-                        <div id="caloriesflip-counter" class="timer calories"></div>
-                        
-                        <span class="timer_lbl distance">Distance</span>
-                        <div id="distanceflip-counter" class="timer distance"></div>
-                        
-                        <span class="timer_lbl time">Time</span>
-                        <div id="timeflip-counter" class="timer">
-                            <div id="timeMinflip-counter" class="timer time"></div>
-                            <span class="digit-separator">:</span>
-                            <div id="timeSecflip-counter" class="timer time"></div>
-                        </div>
+                    <li class="timer csstransforms3d">
+                        <div id="flip-counter" class="small">
                     </li>
                 </ul>
             </div>
