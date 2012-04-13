@@ -1,8 +1,7 @@
 body {
     font-family: Arial;
 	font-size:13px;
-    color:    #333;
-	background-color:red;
+    color:    #7b7d7f;
 	overflow:hidden;
 }
 em{
@@ -13,8 +12,8 @@ em{
 	width:165px;
 }
 
-a {color: #333;}
-
+a {color: #333;text-decoration: none;}
+a:hover{text-shadow: 1px 2px 3px #ccc;}
 #wrapper {
 }
 #wrapper div {
@@ -88,36 +87,60 @@ ul{
 		text-align: right;
 		margin-right: 5px;
 		color: #fff;
-    }    
+    }
+	#main ul.sections li.timer span.today{
+		text-align: center;
+		margin-top: 14px;
+		font-size: 14px;
+	}
 #main ul.sections li.pull_tab{
     background: transparent url('images/pull_tab_close.png') no-repeat 1px 0px;
     cursor: pointer;
     width: 31px;
-	top: 16px;
-	
+	top: 16px;	
 }
-
     #main ul.sections li.inner li{
-    	width: 501px;
+    	width: 500px;
 		float: left;
     }
 	.alert_message{
 		width: 245px;
-		height: 110px;
+		height: 99px;
 		border: 1px solid #666;
 		position: absolute;
-		top: -86px;
+		top: 25px;
 		left: 165px;
-		z-index:-1;
 		padding: 5px;
-		background-color:#fff;
+		background-color: white;
 	}
+	   .alert_message p{
+	   	   text-align: center;
+           margin-top: 25px;
+		   font-size:16px;
+	   }
 	.close_message{
 		position: absolute;
         top: 4px;
         left: 240px;
-        text-decoration: none;
 	}
+	.settings_menu_on{
+		z-index: 1;
+		top: 6px;
+		position: relative;
+		background-color: white;
+		padding: 0 5px;
+		border: solid 1px #CCC;
+		left: 5px;
+		width: 111px;
+	}
+		#main ul.sections li.inner div.details ul.detail_options .settings_menu a{
+			display:block;
+			line-height: 20px;
+		}
+		.settings_menu em{
+            font-size: 14px;
+        }
+	
 	#main ul.sections li.inner li.drop_tab{
 		/*height:25px;*/
 		height: 75px;
@@ -133,13 +156,65 @@ ul{
 		background-color:#fff;
 		border: 1px solid #666;
 		padding: 5px;
-	}
+	}  
+	   #main ul.sections li.inner div.details ul.detail_options{
+	       width: 380px;
+			position: absolute;
+			right: 0;
+			top: 30px;
+			height: 40px;
+			padding: 0;
+	   }
+	       #main ul.sections li.inner div.details ul.detail_options li{
+	       	    width: 126px;
+                float: left;
+	       }
+		   #main ul.sections li.inner div.details ul.detail_options a{
+              line-height: 40px;
+           }
+		   #main ul.sections li.inner div.details ul.detail_options b{
+		   	  width: 40px;
+		      height: 40px;
+			  display: block;
+			  float: left;
+		   }
+			   #main ul.sections li.inner div.details ul.detail_options li.bluetooth_status b{
+			   	  background: transparent url('images/bluetooth_on.png') no-repeat 0px 0px;
+			   	
+			   }
+			   #main ul.sections li.inner div.details ul.detail_options li.account_sync b{
+			   	  background: transparent url('images/sync.png') no-repeat 0px 0px;
+	            
+	           }
+			   #main ul.sections li.inner div.details ul.detail_options li.settings b{
+			   	  background: transparent url('images/gear.png') no-repeat 0px 0px;
+	            
+	           }
+	
 	#main ul.sections li.inner li.chart{
 		height: 340px;
 		background: transparent url('images/inner_bg.png') no-repeat 0px 0px;
 		margin-top: 25px;
 		position: absolute;
 	}
+		#main ul.sections li.inner li.chart ul.chart_menu{
+	        margin-top: 70px;
+			position: absolute;
+			padding-left: 12px;
+	    }
+			#main ul.sections li.inner li.chart ul.chart_menu li{
+			     font-size:18px;
+				 height:25px;
+				 width:151px;	
+				 float:none;
+				 padding:10px;
+			}
+			#main ul.sections li.inner li.chart ul.chart_menu li.selected{
+	             background: transparent url('images/selected_chart.png') no-repeat 0px 8px;  
+            }
+			#main ul.sections li.inner li.chart ul.chart_menu li.selected a{
+                 color: white; 
+			}
 	
 	#main ul.sections li.inner div.tab_link{
 		background: transparent url('images/drop_tab_open.png') no-repeat 0px 0px;

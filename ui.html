@@ -66,18 +66,48 @@
                     <li class="inner">
 	                    <ul class="inner_content">
 							<li class="drop_tab">
-								<div class="alert_message">message <a href="#" class="close_message">X</a></div>
+								<div class="alert_message">
+									<a href="#close_message" class="close_message">X</a>
+									<p></p> 
+								</div>
 								<div class="tab_link"></div>
 								<div class="details">
 									<div>
 										<em>Jessica</em><br/>
 										Treadmill Desk App
+										<ul class="detail_options">
+											<li class="bluetooth_status"><a href="#bluetooth" style="line-height:inherit;"><b></b>Bluetooth Status</a></li>
+											<li class="account_sync">
+												<a class="do_sync" href="#sync"><b></b>Account Sync</a>
+											</li>
+											<li class="settings">
+												<a class="toggle_settings" href="#settings"><b></b>Settings</a>
+												<div class="settings_menu">
+													<p>
+                                                        <em>Units</em>
+													    <a href="#unit_i">Imperial</a>
+													    <a href="#unit_m">Metric</a>
+													</p>
+													<hr />
+													<p>
+                                                        <em>Language</em>
+                                                        <a href="#en">English</a>
+                                                        <a href="#de">German</a>
+                                                    </p>
+				                                </div>
+											</li>
+										</ul>
 									</div>
 								</div>
 								
 	                        </li>
 	                        <li class="chart">
-	                           chart	
+                                <ul class="chart_menu">
+		                            <li class="steps"><a href="#chart_steps">Steps</li>
+		                            <li class="calories"><a href="#chart_calories">Calories</li>
+		                            <li class="distance selected"><a href="#chart_distance">Distance</li>
+		                            <li class="time"><a href="#chart_time">Time</li>
+		                        </ul>	
 	                        </li>
 						</ul>
                     </li>
@@ -97,6 +127,7 @@
                         	<span class="digit-separator">:</span>
 							<div id="timeSecflip-counter" class="timer time"></div>
                         </div>
+						<span class="timer_lbl today">Today</span>
                     </li>
                 </ul>
             </div>

@@ -45,11 +45,6 @@ div.timer li.digit .digit-wrap{
 	color: #000;
 }
 #timeflip-counter.timer{
-	/*position: relative;
-	float: left;
-	left: -45px;
-	display: inline;
-	width: 75px;*/
 	left: 5px;
 	width: 109px;
 }
