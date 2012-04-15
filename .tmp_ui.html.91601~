@@ -93,7 +93,6 @@
                                                         <em>Language</em>
                                                         <a href="#en">English</a>
                                                         <a href="#de">German</a>
-														<a href="#fr">French</a>
                                                     </p>
 				                                </div>
 											</li>
@@ -103,53 +102,14 @@
 								
 	                        </li>
 	                        <li class="chart">
-	                        	<div class="lbl_last7days">Last 7 Days</div>
                                 <ul class="chart_menu">
-		                            <li class="steps selected"><a href="#chart_steps">Steps</a></li>
-		                            <li class="calories"><a href="#chart_calories">Calories</a></li>
-		                            <li class="distance"><a href="#chart_distance">Distance</a></li>
-		                            <li class="time"><a href="#chart_time">Time</a></li>
-		                        </ul>
-								<ul class="actual_charts">
-									<li class="steps selected">
-										<div class="7day">7 Day Total: 52,724</div>
-										<div class="daily_average">Daily Average: 7,532</div>
-										<ul class="bars">
-		                                    <li class="bar1 Steps_1">1391</li>
-		                                    <li class="bar2 Steps_2">0</li>
-		                                    <li class="bar3 Steps_3">23254</li>
-		                                    <li class="bar4 Steps_4">23318</li>
-		                                    <li class="bar5 Steps_5">26140</li>
-		                                    <li class="bar6 Steps_6">27000</li>
-		                                    <li class="bar7 Steps_7">0</li>
-		                                </ul>
-										<ul class="yaxis">
-                                            <li class="Yaxis_Steps_6"></li>
-                                            <li class="Yaxis_Steps_5">50,000</li>
-                                            <li class="Yaxis_Steps_4">40,000</li>
-                                            <li class="Yaxis_Steps_3">30,000</li>
-                                            <li class="Yaxis_Steps_2">20,000</li>
-                                            <li class="Yaxis_Steps_1">10,000</li>
-                                        </ul>
-									</li>
-									<li class="calories">calories chart</li>
-									<li class="distance">distance chart</li>
-									<li class="time">time chart</li>
-								</ul>
-								<ul class="xaxis">
-                                    <li class="Xaxis_1">M</li>
-                                    <li class="Xaxis_2">T</li>
-                                    <li class="Xaxis_3">W</li>
-                                    <li class="Xaxis_4">TH</li>
-									<li class="Xaxis_5">F</li>
-									<li class="Xaxis_6">S</li>
-									<li class="Xaxis_7">SU</li>
-                                </ul>
-								
+		                            <li class="steps"><a href="#chart_steps">Steps</li>
+		                            <li class="calories"><a href="#chart_calories">Calories</li>
+		                            <li class="distance selected"><a href="#chart_distance">Distance</li>
+		                            <li class="time"><a href="#chart_time">Time</li>
+		                        </ul>	
 	                        </li>
-							<!--END li class="chart" -->
 						</ul>
-						 <!-- END ul class="inner_content"-->
                     </li>
                     <li class="timer">
                     	<span class="timer_lbl steps">Steps</span>
@@ -167,7 +127,7 @@
                         	<span class="digit-separator">:</span>
 							<div id="timeSecflip-counter" class="timer time"></div>
                         </div>
-						<div class="timer_lbl today">Today</div>
+						<span class="timer_lbl today">Today</span>
                     </li>
                 </ul>
             </div>

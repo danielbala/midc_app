@@ -88,10 +88,17 @@ ul{
 		margin-right: 5px;
 		color: #fff;
     }
-	#main ul.sections li.timer span.today{
-		text-align: center;
-		margin-top: 14px;
-		font-size: 14px;
+	#main ul.sections li.timer div.today{
+		
+		position: absolute;
+        text-align: center;
+        padding: 2px 10px;
+        font-size: 12px;
+        background-color: #797b7e;
+        color:#fff;
+        bottom: 33px;
+        left: 28%;
+		
 	}
 #main ul.sections li.pull_tab{
     background: transparent url('images/pull_tab_close.png') no-repeat 1px 0px;
@@ -197,17 +204,34 @@ ul{
 		margin-top: 25px;
 		position: absolute;
 	}
+	   div.lbl_last7days{
+	        position: absolute;
+			text-align: center;
+			padding: 2px 10px;
+			font-size: 12px;
+			background-color: #797b7e;
+			color:#fff;
+			bottom: 39px;
+			left: 50%;
+	   }
 		#main ul.sections li.inner li.chart ul.chart_menu{
-	        margin-top: 70px;
-			position: absolute;
-			padding-left: 12px;
+	        position: absolute;
+			top: 94px;
+			left: 1px;
+			padding: 0;
 	    }
 			#main ul.sections li.inner li.chart ul.chart_menu li{
-			     font-size:18px;
-				 height:25px;
-				 width:151px;	
-				 float:none;
-				 padding:10px;
+			    font-size: 18px;
+				height: 20px;
+				width: 140px;
+				float: none;
+				padding: 10px;
+				margin-left: 10px;
+				padding-bottom: 5px;
+				padding-left: 8px;
+			}
+			#main ul.sections li.inner li.chart ul.chart_menu li a{
+				color:#7b7d7f;
 			}
 			#main ul.sections li.inner li.chart ul.chart_menu li.selected{
 	             background: transparent url('images/selected_chart.png') no-repeat 0px 8px;  
@@ -215,7 +239,98 @@ ul{
 			#main ul.sections li.inner li.chart ul.chart_menu li.selected a{
                  color: white; 
 			}
-	
+	   #main ul.sections li.inner li.chart ul.xaxis,
+	   #main ul.sections li.inner li.chart ul.actual_charts{
+            position: absolute;
+			bottom: 64px;
+            left: 142px;
+       }
+	       #main ul.sections li.inner li.chart ul.xaxis li,
+		   #main ul.sections li.inner li.chart ul.actual_charts li ul li{
+	           float: left;
+			   display: inline;
+			   width: 22px;
+			   margin-right:16px;
+			   text-align:center;
+	       }
+	   #main ul.sections li.inner li.chart ul.actual_charts{
+	       padding:0px;
+		   bottom:87px;	
+		   width: 355px;
+	   }
+	       #main ul.sections li.inner li.chart ul.actual_charts li{
+	       	   width: 355px;
+               display:none;
+           }
+		   #main ul.sections li.inner li.chart ul.actual_charts li.selected{
+               display:block;
+           }
+		       #main ul.sections li.inner li.chart ul.actual_charts li div{
+		           position: absolute;
+			       width: 145px;
+				   height:15px;
+			       text-align: right;
+				   top: -65px;
+				   left: -4px;
+				   overflow:hidden;
+		       }
+				   #main ul.sections li.inner li.chart ul.actual_charts li div.daily_average{
+				      left: 150px;
+				   }
+		       /*chart bars*/
+			  #main ul.sections li.inner li.chart ul.actual_charts li ul.bars{
+			  	    height: 170px;
+					width: 266px;
+					display: block;
+					/*overflow: hidden;*/
+			  }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul.bars li{
+		           position: relative;
+				   height:1px;
+				   visibility: hidden;
+		       }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar1{
+			      background-color:#add143;
+			   }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar2{
+	              background-color:#ffe200;
+	           }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar3{
+	              background-color:#f57f20;
+	           }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar4{
+	              background-color:#ed2c92;
+	           }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar5{
+	              background-color:#7f51a1;
+	           }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar6{
+	              background-color:#0baad8;
+	           }
+			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar7{
+	              background-color:#5bc099;
+	           }
+	   
+	   #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis{
+            position: absolute;
+			right: -14px;
+			padding: 0;
+			top: -28px;
+       }
+		   #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis ul{
+	            padding: 0;
+	       }
+           #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis li{
+               float: none;
+               display: none;
+               width: auto;
+			   padding: 0;
+           }
+		      #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis li{
+			  	display: block;
+				height: 28px;
+				text-align: right;
+			  }
 	#main ul.sections li.inner div.tab_link{
 		background: transparent url('images/drop_tab_open.png') no-repeat 0px 0px;
 		cursor: pointer;
