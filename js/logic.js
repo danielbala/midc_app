@@ -10,14 +10,13 @@ function doLoad(env){
 		
 		positionWidget(env);
 		
-		setTimeout(function(){
-	        showMessage("Hello, you can close me if you want to!");
-	    },1000);
+		populateData(function(){
+			prepareChart("ul.actual_charts .steps");
+	        prepareChart("ul.actual_charts .calories");
+	        prepareChart("ul.actual_charts .distance");
+	        prepareChart("ul.actual_charts .time");
+		});
 		
-		prepareChart("ul.actual_charts .steps");
-		prepareChart("ul.actual_charts .calories");
-		prepareChart("ul.actual_charts .distance");
-		prepareChart("ul.actual_charts .time");
 		
 	});
 	
@@ -105,7 +104,14 @@ function assignEventHandlers(env){
         $(this).addClass("selected");
 		$(".actual_charts li."+this_class).addClass("selected");
     });
-	
+	$(".doMetric").click(function(){
+		doMetric();
+		return false;
+	});
+	$(".doImperial").click(function(){
+        doImperial();
+		return false;
+    });
 	//ENTER key
 	$('body').keypress(function(e){
         if (e.which == 13) {        
@@ -119,11 +125,11 @@ function assignEventHandlers(env){
 }
 function prepareChart(item){
 	var chartSpecs = getChartSpecs(item);
-    var tallestBarValue = chartSpecs.maxValue;
+    var tallestXvalue = chartSpecs.maxValue;
     var yaxiscount = chartSpecs.yaxislength;
 
     var maxBarHeight = 28 * yaxiscount; // 28 comes from: #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis li
-    var css_ratio = maxBarHeight / tallestBarValue;
+    var css_ratio = maxBarHeight / tallestXvalue;
     
     $(item + " .bars").css("height", maxBarHeight);
     
@@ -132,15 +138,26 @@ function prepareChart(item){
         var this_height = parseInt($(this).html());
         
         var css_height = this_height * css_ratio;
+		if(this_height > tallestXvalue){
+			css_height = maxBarHeight;
+		}
         var topshouldbe = maxBarHeight - css_height;
+		
+		//console.log(maxBarHeight, this_height, css_height, css_ratio, tallestXvalue );
         if (this_height > 0) {
             $(this).css({
                  height: Math.ceil(css_height)+"px",
-                 top: topshouldbe + "px",
+                 top: Math.ceil(topshouldbe) + "px",
                  visibility: "visible"
             });
             
-        }
+        }else{
+			$(this).css({
+                 height: "1px",
+                 visibility: "hidden"
+            });
+			
+		}
     });
 }
 function getChartSpecs(item){
@@ -157,6 +174,9 @@ function getChartSpecs(item){
 	};
 }
 function positionWidget(env){
+	setTimeout(function(){
+	    showMessage("Hello, you can close me if you want to!");
+	},1000);
 	if (env == "app") {
         window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
         window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
@@ -174,6 +194,113 @@ function initCounters(){
     var timeSecCounter = new flipCounter('timeSecflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:2, maxCount:60});
     // Initialize Time Minute counter
     var timeMinCounter = new flipCounter('timeMinflip-counter', {value:0, inc:1, pace:61000, auto:false, precision:2});
+}
+
+function populateData(callback){
+	$(".First_Name").html(appData.First_Name);
+	$(".Xaxis_1").html(appData.Xaxis_1);
+	$(".Xaxis_2").html(appData.Xaxis_2);
+	$(".Xaxis_3").html(appData.Xaxis_3);
+	$(".Xaxis_4").html(appData.Xaxis_4);
+	$(".Xaxis_5").html(appData.Xaxis_5);
+	$(".Xaxis_6").html(appData.Xaxis_6);
+	$(".Xaxis_7").html(appData.Xaxis_7);
+	$(".Yaxis_Steps_1").html(appData.Yaxis_Steps_1);
+	$(".Yaxis_Steps_2").html(appData.Yaxis_Steps_2);
+	$(".Yaxis_Steps_3").html(appData.Yaxis_Steps_3);
+	$(".Yaxis_Steps_4").html(appData.Yaxis_Steps_4);
+	$(".Yaxis_Steps_5").html(appData.Yaxis_Steps_5);
+	$(".Yaxis_Steps_6").html(appData.Yaxis_Steps_6);
+	$(".Yaxis_Calories_1").html(appData.Yaxis_Calories_1);
+	$(".Yaxis_Calories_2").html(appData.Yaxis_Calories_2);
+	$(".Yaxis_Calories_3").html(appData.Yaxis_Calories_3);
+	$(".Yaxis_Calories_4").html(appData.Yaxis_Calories_4);
+	$(".Yaxis_Calories_5").html(appData.Yaxis_Calories_5);
+	$(".Yaxis_Calories_6").html(appData.Yaxis_Calories_6);
+	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_1);
+	$(".Yaxis_Distance_2").html(appData.Yaxis_Distance_2);
+	$(".Yaxis_Distance_3").html(appData.Yaxis_Distance_3);
+	$(".Yaxis_Distance_4").html(appData.Yaxis_Distance_4);
+	$(".Yaxis_Distance_5").html(appData.Yaxis_Distance_5);
+	$(".Yaxis_Distance_6").html(appData.Yaxis_Distance_6);
+
+	$(".Yaxis_Time_1").html(appData.Yaxis_Time_1);
+	$(".Yaxis_Time_2").html(appData.Yaxis_Time_2);
+	$(".Yaxis_Time_3").html(appData.Yaxis_Time_3);
+	$(".Yaxis_Time_4").html(appData.Yaxis_Time_4);
+	$(".Yaxis_Time_5").html(appData.Yaxis_Time_5);
+	$(".Yaxis_Time_6").html(appData.Yaxis_Time_6);
+	$(".Steps_1").html(appData.Steps_1);
+	$(".Steps_2").html(appData.Steps_2);
+	$(".Steps_3").html(appData.Steps_3);
+	$(".Steps_4").html(appData.Steps_4);
+	$(".Steps_5").html(appData.Steps_5);
+	$(".Steps_6").html(appData.Steps_6);
+	$(".Steps_7").html(appData.Steps_7);
+	$(".Calories_1").html(appData.Calories_1);
+	$(".Calories_2").html(appData.Calories_2);
+	$(".Calories_3").html(appData.Calories_3);
+	$(".Calories_4").html(appData.Calories_4);
+	$(".Calories_5").html(appData.Calories_5);
+	$(".Calories_6").html(appData.Calories_6);
+	$(".Calories_7").html(appData.Calories_7);
+    $(".Distance_1").html(appData.Distance_1);
+    $(".Distance_2").html(appData.Distance_2);
+    $(".Distance_3").html(appData.Distance_3);
+    $(".Distance_4").html(appData.Distance_4);
+    $(".Distance_5").html(appData.Distance_5);
+    $(".Distance_6").html(appData.Distance_6);
+    $(".Distance_7").html(appData.Distance_7);
+
+	$(".Time_1").html(appData.Time_1);
+	$(".Time_2").html(appData.Time_2);
+	$(".Time_3").html(appData.Time_3);
+	$(".Time_4").html(appData.Time_4);
+	$(".Time_5").html(appData.Time_5);
+	$(".Time_6").html(appData.Time_6);
+	$(".Time_7").html(appData.Time_7);
+		
+	callback.call();
+}
+
+function doImperial(){
+	//alert("imperial");
+	console.log(appData);
+	$(".Distance_1").html(appData.Distance_1);
+    $(".Distance_2").html(appData.Distance_2);
+    $(".Distance_3").html(appData.Distance_3);
+    $(".Distance_4").html(appData.Distance_4);
+    $(".Distance_5").html(appData.Distance_5);
+    $(".Distance_6").html(appData.Distance_6);
+    $(".Distance_7").html(appData.Distance_7);
+	
+	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_1);
+    $(".Yaxis_Distance_2").html(appData.Yaxis_Distance_2);
+    $(".Yaxis_Distance_3").html(appData.Yaxis_Distance_3);
+    $(".Yaxis_Distance_4").html(appData.Yaxis_Distance_4);
+    $(".Yaxis_Distance_5").html(appData.Yaxis_Distance_5);
+    $(".Yaxis_Distance_6").html(appData.Yaxis_Distance_6);
+	
+	prepareChart("ul.actual_charts .distance");
+}
+function doMetric(){
+    console.log(appData);
+    $(".Distance_1").html(appData.Distance_Metric_1);
+    $(".Distance_2").html(appData.Distance_Metric_2);
+    $(".Distance_3").html(appData.Distance_Metric_3);
+    $(".Distance_4").html(appData.Distance_Metric_4);
+    $(".Distance_5").html(appData.Distance_Metric_5);
+    $(".Distance_6").html(appData.Distance_Metric_6);
+    $(".Distance_7").html(appData.Distance_Metric_7);
+	
+	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_Metric_1);
+    $(".Yaxis_Distance_2").html(appData.Yaxis_Distance_Metric_2);
+    $(".Yaxis_Distance_3").html(appData.Yaxis_Distance_Metric_3);
+    $(".Yaxis_Distance_4").html(appData.Yaxis_Distance_Metric_4);
+    $(".Yaxis_Distance_5").html(appData.Yaxis_Distance_Metric_5);
+    $(".Yaxis_Distance_6").html(appData.Yaxis_Distance_Metric_6);
+	
+	prepareChart("ul.actual_charts .distance");
 }
 function getAppData(callback){
 	appData = {

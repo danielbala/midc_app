@@ -270,7 +270,7 @@ ul{
 			       width: 145px;
 				   height:15px;
 			       text-align: right;
-				   top: -65px;
+				   bottom: 190px;
 				   left: -4px;
 				   overflow:hidden;
 		       }
@@ -283,11 +283,14 @@ ul{
 					width: 266px;
 					display: block;
 					/*overflow: hidden;*/
+					position: absolute;
+                    bottom: 0px;
 			  }
 			   #main ul.sections li.inner li.chart ul.actual_charts li ul.bars li{
 		           position: relative;
 				   height:1px;
 				   visibility: hidden;
+				   text-indent: -999em;
 		       }
 			   #main ul.sections li.inner li.chart ul.actual_charts li ul li.bar1{
 			      background-color:#add143;
@@ -315,7 +318,7 @@ ul{
             position: absolute;
 			right: -14px;
 			padding: 0;
-			top: -28px;
+			bottom: 0px;
        }
 		   #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis ul{
 	            padding: 0;
