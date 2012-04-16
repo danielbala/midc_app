@@ -11,9 +11,10 @@ function doLoad(env){
 		
 		getAppData(function(){
 			//show main wrapper
-			//$("#wrapper).delay(2000).fadeIn("slow");
+			$("#wrapper").delay(2000).fadeIn("slow");
 			
-			positionWidget(env);
+			//position, set defaults and sticky
+			//positionWidget(env);
 			
 			populateData(function(){
 				prepareChart("ul.actual_charts .steps");
@@ -23,8 +24,6 @@ function doLoad(env){
 				
 				translateTo(currLang);
 			});
-			
-			
 			
 		});
 	});
@@ -103,16 +102,22 @@ function assignEventHandlers(env){
     });
     $(".do_sync").click(function(){
         //TODO LOCALIZE
-        showMessage("uploading exercise data...");
+        showMessage(appLang[currLang]["msg_uploading"]);
         return false;
     });
     $(".chart_menu li").click(function(){
 		$(".settings_menu").removeClass("settings_menu_on");
         $(".chart_menu li, .actual_charts li").removeClass("selected");
 		var this_class = $(this).attr("class");
-		$(".chart_menu li").removeClass("selected");
         $(this).addClass("selected");
 		$(".actual_charts li."+this_class).addClass("selected");
+		
+		//STORE LAST SELECTED CHART IN LOCAL STORAGE
+		try{
+		    var data = new air.ByteArray();
+	        data.writeUTFBytes(this_class);
+	        air.EncryptedLocalStore.setItem('selectedChart', data);
+		}catch(e){}
     });
 	$(".doMetric").click(function(){
 		doMetric();
@@ -125,19 +130,16 @@ function assignEventHandlers(env){
 	$(".doEnglish").click(function(){
         currLang = "en";
 		translateTo("en");
-		$(".lbl_calories").css("font-size","inherit");
         return false;
     });
 	$(".doGerman").click(function(){
         currLang = "de";
 		translateTo("de");
-		$(".lbl_calories").css("font-size","13px");
         return false;
     });
 	$(".doFrench").click(function(){
         currLang = "fr";
 		translateTo("fr");
-		$(".lbl_calories").css("font-size","inherit");
         return false;
     });
 	//ENTER key
@@ -175,7 +177,7 @@ function prepareChart(item){
         if (this_height > 0) {
             $(this).css({
                  height: Math.ceil(css_height)+"px",
-                 top: Math.ceil(topshouldbe) + "px",
+                 top: Math.floor(topshouldbe) + "px",
                  visibility: "visible"
             });
             
@@ -202,13 +204,34 @@ function getChartSpecs(item){
 	};
 }
 function positionWidget(env){
-	setTimeout(function(){
+	/*setTimeout(function(){
 	    showMessage("Hello, you can close me if you want to!");
-	},1000);
+	},1000);*/
+	
 	if (env == "app") {
         window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
         window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
         currLang = air.Capabilities.language;
+		
+		var setLang = air.EncryptedLocalStore.getItem('appLang');
+	    var selectedChart = air.EncryptedLocalStore.getItem('selectedChart');
+	    
+	    if (setLang != null) {
+	        currLang = setLang.readUTFBytes(setLang.bytesAvailable);
+			translateTo(currLang);
+	    }
+		if (selectedChart != null) {
+            //SET LAST SELECTED CHART
+			var currChart = selectedChart.readUTFBytes(selectedChart.bytesAvailable);
+			$(".chart_menu li, .actual_charts li").removeClass("selected");
+			
+			$(".chart_menu li."+currChart).addClass("selected");
+			$(".actual_charts li."+currChart).addClass("selected");
+            $(".settings_menu").removeClass("settings_menu_on");
+          
+        }
+		
+		
     }
 }
 function initCounters(){
@@ -348,7 +371,28 @@ function translateTo(lang){
 			$(this).html(appLang[lang][this_class]);
 		}
 	});
+	//TRANSLATE DAY OF THE WEEK ABBREVIATIONS
+	$(".Xaxis_1").html(appLang[lang]["lbl_"+appData.Xaxis_1.toLowerCase()]);
+    $(".Xaxis_2").html(appLang[lang]["lbl_"+appData.Xaxis_2.toLowerCase()]);
+    $(".Xaxis_3").html(appLang[lang]["lbl_"+appData.Xaxis_3.toLowerCase()]);
+    $(".Xaxis_4").html(appLang[lang]["lbl_"+appData.Xaxis_4.toLowerCase()]);
+    $(".Xaxis_5").html(appLang[lang]["lbl_"+appData.Xaxis_5.toLowerCase()]);
+    $(".Xaxis_6").html(appLang[lang]["lbl_"+appData.Xaxis_6.toLowerCase()]);
+    $(".Xaxis_7").html(appLang[lang]["lbl_"+appData.Xaxis_7.toLowerCase()]);
 	
+	//german text is too long
+	if(lang == "de"){
+	    $(".lbl_calories").css("font-size","13px");
+	}else{
+	    $(".lbl_calories").css("font-size","inherit");
+	}
+	
+	//STORE LAST SELECTED LANGUAGE
+	try{
+	    data = new air.ByteArray();
+        data.writeUTFBytes(lang);
+        air.EncryptedLocalStore.setItem('appLang', data);
+    }catch(e){}
 	
 	
 }
@@ -356,13 +400,13 @@ function getAppData(callback){
 	appData = {
 	    "First_Name": "Kelly",
 	    "Last_Name": "Schuknecht",
-	    "Xaxis_1": "S",
-	    "Xaxis_2": "SU",
-	    "Xaxis_3": "M",
-	    "Xaxis_4": "T",
-	    "Xaxis_5": "W",
-	    "Xaxis_6": "TH",
-	    "Xaxis_7": "F",
+	    "Xaxis_1": "Monday",
+	    "Xaxis_2": "Tuesday",
+	    "Xaxis_3": "Wednesday",
+	    "Xaxis_4": "Thursday",
+	    "Xaxis_5": "Friday",
+	    "Xaxis_6": "Saturday",
+	    "Xaxis_7": "Sunday",
 	    "Yaxis_Steps_1": "10,000",
 	    "Yaxis_Steps_2": "20,000",
 	    "Yaxis_Steps_3": "30,000",
@@ -393,40 +437,40 @@ function getAppData(callback){
 	    "Yaxis_Time_4": "80",
 	    "Yaxis_Time_5": "100",
 	    "Yaxis_Time_6": "120",
-	    "Steps_1": 1391,
-	    "Steps_2": 0,
-	    "Steps_3": 23254,
-	    "Steps_4": 23318,
-	    "Steps_5": 26140,
-	    "Steps_6": 27000,
+	    "Steps_1": 23254,
+	    "Steps_2": 23318,
+	    "Steps_3": 26140,
+	    "Steps_4": 27000,
+	    "Steps_5": 0,
+	    "Steps_6": 0,
 	    "Steps_7": 0,
-	    "Calories_1": 58,
-	    "Calories_2": 0,
-	    "Calories_3": 1020,
-	    "Calories_4": 966,
-	    "Calories_5": 915,
-	    "Calories_6": 1034,
+	    "Calories_1": 1020,
+	    "Calories_2": 966,
+	    "Calories_3": 915,
+	    "Calories_4": 1034,
+	    "Calories_5": 0,
+	    "Calories_6": 0,
 	    "Calories_7": 0,
-	    "Distance_1": 0.6,
-	    "Distance_2": 0,
-	    "Distance_3": 9.5,
-	    "Distance_4": 8.9,
-	    "Distance_5": 8.5,
-	    "Distance_6": 10,
+	    "Distance_1": 9.5,
+	    "Distance_2": 8.9,
+	    "Distance_3": 8.5,
+	    "Distance_4": 10,
+	    "Distance_5": 8,
+	    "Distance_6": 0,
 	    "Distance_7": 0,
-	    "Distance_Metric_1": 1,
-	    "Distance_Metric_2": 0,
-	    "Distance_Metric_3": 15.3,
-	    "Distance_Metric_4": 14.3,
-	    "Distance_Metric_5": 13.7,
-	    "Distance_Metric_6": 16.1,
+	    "Distance_Metric_1": 15.3,
+	    "Distance_Metric_2": 14.3,
+	    "Distance_Metric_3": 13.7,
+	    "Distance_Metric_4": 16.1,
+	    "Distance_Metric_5": 12.9,
+	    "Distance_Metric_6": 0,
 	    "Distance_Metric_7": 0,
-	    "Time_1": 21,
-	    "Time_2": 0,
-	    "Time_3": 301,
-	    "Time_4": 304,
-	    "Time_5": 398,
-	    "Time_6": 349,
+	    "Time_1": 301,
+	    "Time_2": 304,
+	    "Time_3": 398,
+	    "Time_4": 349,
+	    "Time_5": 300,
+	    "Time_6": 0,
 	    "Time_7": 0,
 	    "Exercise_ID": "",
 	    "Exercise_Name": "",
@@ -496,18 +540,18 @@ function getAppLanguage(callback){
 	        "lbl_settings": "Einstellungen",
 	        "lbl_sync": "Sync",
 	        "lbl_7daytotal": "Gesamt 7 Tage",
-	        "lbl_daily_average": "Durchschnitt täglich",
+	        "lbl_daily_average": "Durchschnitt t&auml;glich",
 	        "lbl_last7days": "die letzten 7 Tage",
 	        "lbl_bt_off": "aus",
-	        "lbl_bt_search": "wird gesucht…",
+	        "lbl_bt_search": "wird gesucht...",
 	        "lbl_bt_connected": "verbunden",
 	        "lbl_treadmill_desk": "Laufbandkonsole",
-	        "msg_no_treadmill_yet": "Es können keine Laufbanddaten angezeigt werden.",
+	        "msg_no_treadmill_yet": "Es k&ouml;nnen keine Laufbanddaten angezeigt werden.",
 	        "msg_no_treadmill_7days": "Keine Daten aus den letzten 7 Tagen.",
 	        "msg_treadmill_connect": "Wollen Sie eine Verbindung zu der Laufbandkonsole herstellen?",
 	        "msg_treadmill_connected": "Verbindung mit der Laufbandkonsole besteht",
-	        "msg_uploading": "Trainingsdaten werden übertragen",
-	        "msg_upload_complete": "Datenübertragung vollständig"
+	        "msg_uploading": "Trainingsdaten werden &uuml;bertragen",
+	        "msg_upload_complete": "Daten&uuml;bertragung vollst&auml;ndig"
 	    },
 	    "fr": {}
 	};

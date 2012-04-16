@@ -1,7 +1,7 @@
 body {
     font-family: Arial;
 	font-size:13px;
-    color:    #7b7d7f;
+    color: #333;
 	overflow:hidden;
 }
 em{
@@ -15,6 +15,7 @@ em{
 a {color: #333;text-decoration: none;}
 a:hover{text-shadow: 1px 2px 3px #ccc;}
 #wrapper {
+	display:none;
 }
 #wrapper div {
     /*padding: 5px;*/
@@ -30,13 +31,16 @@ div#login_items{
 	padding-top: 121px;
 	padding-left: 70px;
 }
-#messages div{
+div#login_items div{
+	padding:5px;
+}
+div#messages div{
 	position:absolute;
 	padding:0;
 }
 
 #main, #progress, #message, #invalid_login {
-    /*display: none;*/
+    display: none;
 }
 ul{
 	list-style:none;
@@ -66,6 +70,7 @@ ul{
 #main ul.sections li.inner,
 #main ul.sections li.timer,
 #main ul.sections li.pull_tab {
+	color:    #7b7d7f;
 	height: 340px; 
 	float: left;
 	position:relative;
@@ -119,6 +124,7 @@ ul{
 		left: 165px;
 		padding: 5px;
 		background-color: white;
+		z-index: -1;
 	}
 	   .alert_message p{
 	   	   text-align: center;
