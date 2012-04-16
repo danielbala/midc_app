@@ -1,31 +1,36 @@
+var LOGIN_URL = 'https://www.interactivehealthpartner.com/idc/login.asp';
+var CONFIG_URL = 'https://www.interactivehealthpartner.com/idc/ihp_config.xml';
+var IHPUSER_URL = 'https://www.interactivehealthpartner.com/idc/ihpuser.asp?id=';
+var APPDATA_URL = 'https://www.interactivehealthpartner.com/idc/midc-data.asp?id=';
+var IHPPROCESS_URL = 'https://www.interactivehealthpartner.com/idc/process.asp?id=';
+var UPLOAD_URL = 'https://www.interactivehealthpartner.com/idc/server_upload.php?dest=';
+var FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin';
+
+var ID_NUMBER = null;
+
+// FOR TESTING
+var OFFLINE = false;
+
 //lets get it started... 
 var appData = {};
 var appLang = {};
 var currLang = "en";
 
+//global events
+try{
+    window.nativeWindow.addEventListener(air.Event.CLOSING, doSignOut);
+}catch(e){}
+
 function doLoad(env){
+	
+	//checkForUpdate();
 	
 	assignEventHandlers(env);
 	
 	getAppLanguage(function(){
+		//show main wrapper
+		$("#wrapper").delay(2000).fadeIn("slow");
 		
-		getAppData(function(){
-			//show main wrapper
-			$("#wrapper").delay(2000).fadeIn("slow");
-			
-			//position, set defaults and sticky
-			//positionWidget(env);
-			
-			populateData(function(){
-				prepareChart("ul.actual_charts .steps");
-				prepareChart("ul.actual_charts .calories");
-				prepareChart("ul.actual_charts .distance");
-				prepareChart("ul.actual_charts .time");
-				
-				translateTo(currLang);
-			});
-			
-		});
 	});
     
 	
@@ -35,11 +40,14 @@ function doLoad(env){
 	return;
 }
 //HELPER FUNCTIONS
-function showMessage(msg){
+function showMessage(msg, callback){
 	$(".alert_message p").html(msg);
 	$(".alert_message").animate({top: "-86px"}, "slow", function(){		
         $(".alert_message").css({zIndex: "2"});
     });
+    if(callback){
+        callback.call();
+    }
 }
 function hideMessage(){
 	$(".alert_message p").html("");
@@ -49,18 +57,51 @@ function assignEventHandlers(env){
 	//click handlers
     $('#signin').click(function(){
         
-        $("#wrapper").css("background-image","none").css("background-color","transparent");
+        $(".intro").hide();
+        $('#invalid_login').hide();
+        $("#progress").show();
         
-        $("#login_items div").fadeOut("fast", function(){
-            $("#login_items").fadeOut("slow", function(){
+        doSignIn(function(){
+            
+            populateData(function(){
                 
-                positionWidget(env);
-                
-                $('#main').fadeIn('slow');
-            }); 
+                hideLoginItems(function(){
+    				prepareChart("ul.actual_charts .steps");
+    				prepareChart("ul.actual_charts .calories");
+    				prepareChart("ul.actual_charts .distance");
+    				prepareChart("ul.actual_charts .time");
+
+    				translateTo(currLang);
+
+    				//position, set defaults and sticky
+    	            positionWidget(env);
+
+                    $('#main').fadeIn('slow');
+                    
+                    setTimeout(function(){
+                	    showMessage("Press 1 to start Time!<br /> Press 2 to start Steps<br /> Press p to Pause<br /> Press r to Resume");
+                	},1000);
+
+    			});
+    			
+            });
+            
         });
+        
     });
-    
+    $('.close_app').click(function(){
+        doSignOut();
+    });
+    $('#exit').click(function(){
+        doSignOut();
+    });
+    //forgot my password link click
+    $('#reminder_link').click(function(){
+		var url = FORGOT_PWD_URL;
+		var urlReq = new air.URLRequest(url);
+		air.navigateToURL(urlReq);
+
+	});
     $(".pull_tab").live("click", function(){
         if($(".pull_tab").hasClass("close_all")){
             $(".inner").hide("slow", function(){
@@ -143,15 +184,22 @@ function assignEventHandlers(env){
         return false;
     });
 	//ENTER key
-	$('body').keypress(function(e){
-        if (e.which == 13) {        
-            $('#signin').click();
-            e.preventDefault();
-            return false;
-        }
-        
-    });
+	//enter should submit
+    enterHandler();
 	
+}
+function hideLoginItems(callback){
+    $("#wrapper").css("background-image","none").css("background-color","transparent");
+    
+    $("#login_items div").fadeOut("fast", function(){
+        $("#login_items").fadeOut("slow", function(){
+
+        }); 
+    });
+    
+    setTimeout(function(){
+        callback();
+    }, 200);
 }
 function prepareChart(item){
 	var chartSpecs = getChartSpecs(item);
@@ -234,91 +282,105 @@ function positionWidget(env){
 		
     }
 }
+//PUT IN GLOBAL SCOPE SO WE CAN STOP AND START ELSEWHERE
+var stepsCounter = calorieCounter = distanceCounter = timeSecCounter = timeMinCounter = {};
 function initCounters(){
 	// Initialize Steps counter
-    var stepsCounter = new flipCounter('stepsflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:5});
+    stepsCounter = new flipCounter('stepsflip-counter', {value:0, inc:2, pace:1000, auto:false, precision:5});
     // Initialize Calorie counter
-    var calorieCounter = new flipCounter('caloriesflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:4});
+    calorieCounter = new flipCounter('caloriesflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:4});
     // Initialize Distance counter
-    var distanceCounter = new flipCounter('distanceflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:4});
+    distanceCounter = new flipCounter('distanceflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:4});
     // Initialize Time Seconds counter
-    var timeSecCounter = new flipCounter('timeSecflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:2, maxCount:60});
+    timeSecCounter = new flipCounter('timeSecflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:2, maxCount:60});
     // Initialize Time Minute counter
-    var timeMinCounter = new flipCounter('timeMinflip-counter', {value:0, inc:1, pace:61000, auto:false, precision:2});
+    timeMinCounter = new flipCounter('timeMinflip-counter', {value:0, inc:1, pace:62000, auto:false, precision:2});
 }
 
 function populateData(callback){
-	$(".First_Name").html(appData.First_Name);
-	
-	$(".Xaxis_1").html(appData.Xaxis_1);
-	$(".Xaxis_2").html(appData.Xaxis_2);
-	$(".Xaxis_3").html(appData.Xaxis_3);
-	$(".Xaxis_4").html(appData.Xaxis_4);
-	$(".Xaxis_5").html(appData.Xaxis_5);
-	$(".Xaxis_6").html(appData.Xaxis_6);
-	$(".Xaxis_7").html(appData.Xaxis_7);
-	
-	$(".Yaxis_Steps_1").html(appData.Yaxis_Steps_1);
-	$(".Yaxis_Steps_2").html(appData.Yaxis_Steps_2);
-	$(".Yaxis_Steps_3").html(appData.Yaxis_Steps_3);
-	$(".Yaxis_Steps_4").html(appData.Yaxis_Steps_4);
-	$(".Yaxis_Steps_5").html(appData.Yaxis_Steps_5);
-	$(".Yaxis_Steps_6").html(appData.Yaxis_Steps_6);
-	
-	$(".Yaxis_Calories_1").html(appData.Yaxis_Calories_1);
-	$(".Yaxis_Calories_2").html(appData.Yaxis_Calories_2);
-	$(".Yaxis_Calories_3").html(appData.Yaxis_Calories_3);
-	$(".Yaxis_Calories_4").html(appData.Yaxis_Calories_4);
-	$(".Yaxis_Calories_5").html(appData.Yaxis_Calories_5);
-	$(".Yaxis_Calories_6").html(appData.Yaxis_Calories_6);
-	
-	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_1);
-	$(".Yaxis_Distance_2").html(appData.Yaxis_Distance_2);
-	$(".Yaxis_Distance_3").html(appData.Yaxis_Distance_3);
-	$(".Yaxis_Distance_4").html(appData.Yaxis_Distance_4);
-	$(".Yaxis_Distance_5").html(appData.Yaxis_Distance_5);
-	$(".Yaxis_Distance_6").html(appData.Yaxis_Distance_6);
-
-	$(".Yaxis_Time_1").html(appData.Yaxis_Time_1);
-	$(".Yaxis_Time_2").html(appData.Yaxis_Time_2);
-	$(".Yaxis_Time_3").html(appData.Yaxis_Time_3);
-	$(".Yaxis_Time_4").html(appData.Yaxis_Time_4);
-	$(".Yaxis_Time_5").html(appData.Yaxis_Time_5);
-	$(".Yaxis_Time_6").html(appData.Yaxis_Time_6);
-	
-	$(".Steps_1").html(appData.Steps_1);
-	$(".Steps_2").html(appData.Steps_2);
-	$(".Steps_3").html(appData.Steps_3);
-	$(".Steps_4").html(appData.Steps_4);
-	$(".Steps_5").html(appData.Steps_5);
-	$(".Steps_6").html(appData.Steps_6);
-	$(".Steps_7").html(appData.Steps_7);
-	
-	$(".Calories_1").html(appData.Calories_1);
-	$(".Calories_2").html(appData.Calories_2);
-	$(".Calories_3").html(appData.Calories_3);
-	$(".Calories_4").html(appData.Calories_4);
-	$(".Calories_5").html(appData.Calories_5);
-	$(".Calories_6").html(appData.Calories_6);
-	$(".Calories_7").html(appData.Calories_7);
     
-	$(".Distance_1").html(appData.Distance_1);
-    $(".Distance_2").html(appData.Distance_2);
-    $(".Distance_3").html(appData.Distance_3);
-    $(".Distance_4").html(appData.Distance_4);
-    $(".Distance_5").html(appData.Distance_5);
-    $(".Distance_6").html(appData.Distance_6);
-    $(".Distance_7").html(appData.Distance_7);
+    //air.trace("in popdata", appData);
+    
+    getDataFrom(APPDATA_URL+ID_NUMBER, "", function(response){
+        
+        //air.trace("popdataback ", response);
+        
+        appData = JSON.parse(response);
+        
+        $(".First_Name").html(appData.First_Name);
 
-	$(".Time_1").html(appData.Time_1);
-	$(".Time_2").html(appData.Time_2);
-	$(".Time_3").html(appData.Time_3);
-	$(".Time_4").html(appData.Time_4);
-	$(".Time_5").html(appData.Time_5);
-	$(".Time_6").html(appData.Time_6);
-	$(".Time_7").html(appData.Time_7);
-		
-	callback.call();
+    	$(".Xaxis_1").html(appData.Xaxis_1);
+    	$(".Xaxis_2").html(appData.Xaxis_2);
+    	$(".Xaxis_3").html(appData.Xaxis_3);
+    	$(".Xaxis_4").html(appData.Xaxis_4);
+    	$(".Xaxis_5").html(appData.Xaxis_5);
+    	$(".Xaxis_6").html(appData.Xaxis_6);
+    	$(".Xaxis_7").html(appData.Xaxis_7);
+
+    	$(".Yaxis_Steps_1").html(appData.Yaxis_Steps_1);
+    	$(".Yaxis_Steps_2").html(appData.Yaxis_Steps_2);
+    	$(".Yaxis_Steps_3").html(appData.Yaxis_Steps_3);
+    	$(".Yaxis_Steps_4").html(appData.Yaxis_Steps_4);
+    	$(".Yaxis_Steps_5").html(appData.Yaxis_Steps_5);
+    	$(".Yaxis_Steps_6").html(appData.Yaxis_Steps_6);
+
+    	$(".Yaxis_Calories_1").html(appData.Yaxis_Calories_1);
+    	$(".Yaxis_Calories_2").html(appData.Yaxis_Calories_2);
+    	$(".Yaxis_Calories_3").html(appData.Yaxis_Calories_3);
+    	$(".Yaxis_Calories_4").html(appData.Yaxis_Calories_4);
+    	$(".Yaxis_Calories_5").html(appData.Yaxis_Calories_5);
+    	$(".Yaxis_Calories_6").html(appData.Yaxis_Calories_6);
+
+    	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_1);
+    	$(".Yaxis_Distance_2").html(appData.Yaxis_Distance_2);
+    	$(".Yaxis_Distance_3").html(appData.Yaxis_Distance_3);
+    	$(".Yaxis_Distance_4").html(appData.Yaxis_Distance_4);
+    	$(".Yaxis_Distance_5").html(appData.Yaxis_Distance_5);
+    	$(".Yaxis_Distance_6").html(appData.Yaxis_Distance_6);
+
+    	$(".Yaxis_Time_1").html(appData.Yaxis_Time_1);
+    	$(".Yaxis_Time_2").html(appData.Yaxis_Time_2);
+    	$(".Yaxis_Time_3").html(appData.Yaxis_Time_3);
+    	$(".Yaxis_Time_4").html(appData.Yaxis_Time_4);
+    	$(".Yaxis_Time_5").html(appData.Yaxis_Time_5);
+    	$(".Yaxis_Time_6").html(appData.Yaxis_Time_6);
+
+    	$(".Steps_1").html(appData.Steps_1);
+    	$(".Steps_2").html(appData.Steps_2);
+    	$(".Steps_3").html(appData.Steps_3);
+    	$(".Steps_4").html(appData.Steps_4);
+    	$(".Steps_5").html(appData.Steps_5);
+    	$(".Steps_6").html(appData.Steps_6);
+    	$(".Steps_7").html(appData.Steps_7);
+
+    	$(".Calories_1").html(appData.Calories_1);
+    	$(".Calories_2").html(appData.Calories_2);
+    	$(".Calories_3").html(appData.Calories_3);
+    	$(".Calories_4").html(appData.Calories_4);
+    	$(".Calories_5").html(appData.Calories_5);
+    	$(".Calories_6").html(appData.Calories_6);
+    	$(".Calories_7").html(appData.Calories_7);
+
+    	$(".Distance_1").html(appData.Distance_1);
+        $(".Distance_2").html(appData.Distance_2);
+        $(".Distance_3").html(appData.Distance_3);
+        $(".Distance_4").html(appData.Distance_4);
+        $(".Distance_5").html(appData.Distance_5);
+        $(".Distance_6").html(appData.Distance_6);
+        $(".Distance_7").html(appData.Distance_7);
+
+    	$(".Time_1").html(appData.Time_1);
+    	$(".Time_2").html(appData.Time_2);
+    	$(".Time_3").html(appData.Time_3);
+    	$(".Time_4").html(appData.Time_4);
+    	$(".Time_5").html(appData.Time_5);
+    	$(".Time_6").html(appData.Time_6);
+    	$(".Time_7").html(appData.Time_7);
+        
+        callback();
+        return false;
+    });
+    return false;
 }
 
 function doImperial(){
@@ -558,6 +620,237 @@ function getAppLanguage(callback){
 	callback.call();
 }
 
+function checkForUpdate(){
+    //check for update
+    var appUpdater = new runtime.air.update.ApplicationUpdaterUI();
+	appUpdater.configurationFile = new air.File("app:/updateConfig.xml");
+	appUpdater.initialize();
+	appUpdater.checkNow();
+}
+function doSignIn(callback){
+    
+    var data = null;
+	var username = null;
+	var password = null;
+	var success_login = false;
+	var return_data = null;
+	
+	username = document.getElementById('username').value;
+	password = document.getElementById('password').value;
+    
+    data = "lname=" + escape(username) + "&password=" + escape(password);//we should encypt this...
+    
+	getDataFrom(LOGIN_URL, data, function(response){
+	    
+	    //air.trace("back", response);
+	    return_data = response.split("|");
+        ID_NUMBER = return_data[1];
+        //air.trace("#" + ID_NUMBER);
+    
+        //air.trace(return_data[0]);
+        
+        if (return_data[0] == "success") {
+
+    		if (document.getElementById('remember').checked) {
+
+    			data = new air.ByteArray();
+    			data.writeUTFBytes(username);
+    			air.EncryptedLocalStore.setItem('username', data);
+
+    			data = new air.ByteArray();
+    			data.writeUTFBytes(password);
+    			air.EncryptedLocalStore.setItem('password', data);
+    			
+    		}
+    		else {
+    			removeUser();
+
+    		}//END if remember checked 
+    		
+    		//MOVE ON
+			callback.call();
+			return false;
+			
+			
+    	}//END if(response == "success"){
+    	else 
+    		if (response == "fail") {
+
+    			removeUser();
+    			
+                $("#progress").hide();
+                $(".intro").hide();
+    			$('#invalid_login').fadeIn('fast');
+
+    			//reset username and password	 
+    			username = document.getElementById('username').value = '';
+    			password = document.getElementById('password').value = '';
+    		}//END else if(response == "fail")
+	});
+	
+    return false;
+    
+}
+function doSignOut(){
+    rememberUser();
+    var calledp = false;
+    showMessage("IHP Data Communicator session ending...<img src='icons/loading.gif' alt='loading' width='43' height='11' />", function(){
+	    setTimeout(function(){
+	        hideMessage();
+	        $('#main, #login_items').fadeOut('slow', function(){
+
+
+        		if (ID_NUMBER !== null && typeof ID_NUMBER != "undefined" ) {
+                    //PUTBACK
+        			/*var urlString = IHPPROCESS_URL + ID_NUMBER;
+        			var urlReqx = new air.URLRequest(urlString);
+
+        			var urlStreamx = new air.URLLoader();
+        			try {
+        				if(!calledp){
+        					air.trace("call processx: " + urlString);
+        					urlStreamx.load(urlReqx);
+        					calledp = true;
+        				}
+        			} 
+        			catch (error) {
+        				calledp = false;
+        				alert("Could not call the process script.");
+        			}*/
+        		}
+	        
+	            try{air.NativeApplication.nativeApplication.exit();}
+    			catch(e){}
+	        });
+	        
+	        
+	    },2000);
+	    
+	
+
+	});
+}
+function enterHandler(event){
+	$('body').keypress(function(e){
+	    air.trace(e.which);
+		if (e.which == 13) {
+		
+			if ($('#signin').is(':visible')) {
+				if(OFFLINE){
+					ID_NUMBER = "138";
+					$('#login_items').fadeOut('fast');
+					$('#main').delay(1000).fadeIn('slow');
+					$('#invalid_login').fadeOut('fast');
+					//get config; - possible fail - this will populate: CONFIG_FILES_ARRAY
+					//getConfig("file:///Library/WebServer/Documents/bbd/sample_files/ihp_config_new.xml");
+					//attempt to auto upload
+					//setTimeout(auto_upload,1000);
+				}else{
+					$('#signin').click();
+				}
+			}
+			
+			e.preventDefault();
+			return false;
+		}
+		if (e.which == 49) {
+		    if ($('#signin').is(':visible')) {
+		        
+		    }else{
+		        timeSecCounter.setAuto(true).setValue(0);
+		        timeMinCounter.setAuto(true).setValue(0);
+		    }
+		    //e.preventDefault();
+			//return false;
+		}
+		if (e.which == 50) {
+		    if ($('#signin').is(':visible')) {
+		        
+		    }else{
+		        stepsCounter.setAuto(true).setValue(0);
+		    }
+		    //e.preventDefault();
+			//return false;
+		}
+		if (e.which == 112) {
+		    if ($('#signin').is(':visible')) {
+		        
+		    }else{
+		        stepsCounter.setAuto(false);
+		        timeSecCounter.setAuto(false);
+		        timeMinCounter.setAuto(false);
+		    }
+		}
+		if (e.which == 114) {
+		    if ($('#signin').is(':visible')) {
+		        
+		    }else{
+		        stepsCounter.setAuto(true);
+		        timeSecCounter.setAuto(true);
+		        timeMinCounter.setAuto(true);
+		    }
+		}
+		
+	});
+	
+}
+function rememberUser(){
+	var username = air.EncryptedLocalStore.getItem('username');
+	var pass = air.EncryptedLocalStore.getItem('password');
+	
+	if (username != null) {
+		document.getElementById('username').value = username.readUTFBytes(username.bytesAvailable);
+		document.getElementById('password').value = pass.readUTFBytes(pass.bytesAvailable);
+		document.getElementById('remember').checked = true;
+	}
+	else {
+		document.getElementById('username').value = '';
+		document.getElementById('password').value = '';
+		document.getElementById('remember').checked = false;
+	}
+}
+function doRemember(){
+	var username = air.EncryptedLocalStore.getItem('username');
+	var pass = air.EncryptedLocalStore.getItem('password');
+	
+	if (username != null) {
+		removeUser();
+	}
+}
+function removeUser(){
+	air.EncryptedLocalStore.removeItem('username');
+	air.EncryptedLocalStore.removeItem('password');
+}
+function getDataFrom(url, data, callback){
+    
+	request = new air.URLRequest(url);
+	request.method = air.URLRequestMethod.POST;
+
+	request.data = data
+	loader = new air.URLLoader();
+	loader.addEventListener(air.Event.COMPLETE, function(event){
+		
+		air.trace(url);
+        air.trace(data);
+        air.trace("func: ",event.target.data);
+        	
+    	//MOVE ON
+		callback(event.target.data);
+		return false;
+			
+			   
+    });// loader callback function	
+    
+    try {
+    	loader.load(request);
+    } 
+    catch (error) {
+    	alert("Could not contact server.");
+    }
+    
+    return false;
+    
+}
 //UTIL
 Array.max = function( array ){
     return Math.max.apply( Math, array );

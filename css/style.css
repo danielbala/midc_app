@@ -14,6 +14,10 @@ em{
 
 a {color: #333;text-decoration: none;}
 a:hover{text-shadow: 1px 2px 3px #ccc;}
+#invalid_login a{
+	text-decoration:underline;
+	color:#fff;
+}
 #wrapper {
 	display:none;
 }
@@ -21,8 +25,13 @@ a:hover{text-shadow: 1px 2px 3px #ccc;}
     /*padding: 5px;*/
 }
 #footer{
-    position:absolute;bottom:0px;right:0;
-    color:#fff;
+    background-color: transparent;
+	position: relative;
+	width: 50px;
+	bottom: -70px;
+	left: 275px;
+	text-align: right;
+	color:#ccc;
 }
 div#login_items{
 	background: transparent url('images/bg/fade2.png') no-repeat 0 0;
@@ -35,7 +44,7 @@ div#login_items div{
 	padding:5px;
 }
 div#messages div{
-	position:absolute;
+	/*position:absolute;*/
 	padding:0;
 }
 
@@ -90,9 +99,12 @@ ul{
 		margin-top: 20px;
 		display: block;
 		text-align: right;
-		margin-right: 5px;
-		color: #fff;
+		margin-right: 3px;
+		color: white;
     }
+	#main ul.sections li.timer span.lbl_steps{
+		margin-top: 30px;
+	}
 	#main ul.sections li.timer span.today{
 		display:block;
 		position: absolute;
@@ -136,6 +148,13 @@ ul{
         top: 4px;
         left: 240px;
 	}
+	.close_app{
+        position: absolute;
+        top: 9px;
+        left: 95px;
+		color:#fff;
+		font-size:15px;
+    }
 	.settings_menu_on{
 		z-index: 1;
 		top: 6px;

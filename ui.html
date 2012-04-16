@@ -43,21 +43,21 @@
                     </label>
                     <input id="signin" type="button" value="Sign In" class="button" /><input id="exit" type="button" value="Exit" class="button" />
                 </div>
-                <div id="messages">
+                <div id="messages" style="width:247px;font-size:12px;padding-top: 6px;">
                     <div id="progress">
                         <img src="icons/loading.gif" alt="loading" width="43" height="11" />
                     </div>
-                    <div id="invalid_login">
+                    <div id="invalid_login" style="position: relative;top: -5px;">
                         Invalid Username and Password!
                         <br/>
                         Please Try Again or Click <a id="reminder_link" href="#">here</a>
-                        for reminder.
+                        for a reminder.
                     </div>
-                    <div class="intro" style="width:245px;font-size:12px;">
+                    <div class="intro">
                         Use to view your treadmill desk results in real time on your computer.
                     </div>
                 </div>
-                <div id="footer" style="background-color:#ccc;">
+                <div id="footer">
                     alpha
                 </div>
             </div>
@@ -307,6 +307,7 @@
                         <!-- END ul class="inner_content"-->
                     </li>
                     <li class="timer">
+                    	<a href="#close_app" class="close_app">X</a>
                         <span class="lbl_steps timer_lbl steps">Steps</span>
                         <div id="stepsflip-counter" class="timer steps">
                         </div>
