@@ -88,8 +88,8 @@ ul{
 		margin-right: 5px;
 		color: #fff;
     }
-	#main ul.sections li.timer div.today{
-		
+	#main ul.sections li.timer span.today{
+		display:block;
 		position: absolute;
         text-align: center;
         padding: 2px 10px;
@@ -204,7 +204,8 @@ ul{
 		margin-top: 25px;
 		position: absolute;
 	}
-	   div.lbl_last7days{
+	   span.lbl_last7days{
+	   	   display:block;
 	        position: absolute;
 			text-align: center;
 			padding: 2px 10px;
@@ -269,13 +270,14 @@ ul{
 		           position: absolute;
 			       width: 145px;
 				   height:15px;
-			       text-align: right;
+			       text-align: left;
 				   bottom: 190px;
 				   left: -4px;
 				   overflow:hidden;
 		       }
 				   #main ul.sections li.inner li.chart ul.actual_charts li div.daily_average{
-				      left: 150px;
+				      left: 140px;
+					  width: 161px;
 				   }
 		       /*chart bars*/
 			  #main ul.sections li.inner li.chart ul.actual_charts li ul.bars{
@@ -352,7 +354,17 @@ ul{
     }
 
 
-
+span.lbl_bt{
+	background: url('images/bluetooth.png') no-repeat 0px 2px;
+padding-left: 23px;
+display: block;
+width: 70px;
+line-height: 14px;
+margin-left: 34px;
+margin-top: 10px;
+min-height: 30px;
+padding-top: 4px;
+}
 .inputlbl {
     width: 82px;
     display: block;

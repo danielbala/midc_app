@@ -1,6 +1,9 @@
 <html>
 	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		
 		<title>MIDC</title>
+		
 		<link rel="stylesheet" type="text/css" href="css/xsmall.css" />
         <link rel="stylesheet" type="text/css" href="css/style.css" />
         
@@ -86,27 +89,33 @@
                                 <div class="tab_link"></div>
                                 <div class="details">
                                     <div>
-                                        <em>Jessica</em><br/>
-                                        Treadmill Desk App
+                                        <em><span class="First_Name" data-link="First_Name"></span></em><br/>
+                                        <span class="lbl_treadmill_desk">Treadmill Desk</span> App
                                         <ul class="detail_options">
-                                            <li class="bluetooth_status"><a href="#bluetooth" style="line-height:inherit;"><b></b>Bluetooth Status</a></li>
+                                            <li class="bluetooth_status">
+                                                <a href="#bluetooth">
+                                                    <b></b>
+                                                    <span class="lbl_bt_off lbl_bt_connected lbl_bt_search lbl_bt">OFF</span>
+                                                </a>
+                                            </li>
                                             <li class="account_sync">
-                                                <a class="do_sync" href="#sync"><b></b>Account Sync</a>
+                                                <a class="do_sync" href="#sync"><b></b><span class="lbl_sync">Account Sync</span></a>
                                             </li>
                                             <li class="settings">
-                                                <a class="toggle_settings" href="#settings"><b></b>Settings</a>
+                                                <a class="toggle_settings" href="#settings"><b></b><span class="lbl_settings">Settings</span></a>
                                                 <div class="settings_menu">
                                                     <p>
                                                         <em>Units</em>
-                                                        <a href="#unit_i">Imperial</a>
-                                                        <a href="#unit_m">Metric</a>
+                                                        <a class="doImperial" href="#unit_i">Imperial</a>
+                                                        <a class="doMetric" href="#unit_m">Metric</a>
                                                     </p>
                                                     <hr />
                                                     <p>
                                                         <em>Language</em>
-                                                        <a href="#en">English</a>
-                                                        <a href="#de">German</a>
-                                                        <a href="#fr">French</a>
+                                                        <a class="doEnglish" href="#en">English</a>
+                                                        <a class="doGerman" href="#de">German</a>
+                                                        <a class="doFrench" href="#fr">French</a>
+                                                        <a class="doSpanish" href="#fr">Spanish</a>
                                                     </p>
                                                 </div>
                                             </li>
@@ -116,71 +125,135 @@
                                 
                             </li>
                             <li class="chart">
-                                <div class="lbl_last7days">Last 7 Days</div>
+                                <span class="lbl_last7days">Last 7 Days</span>
                                 <ul class="chart_menu">
-                                    <li class="steps selected"><a href="#chart_steps">Steps</a></li>
-                                    <li class="calories"><a href="#chart_calories">Calories</a></li>
-                                    <li class="distance"><a href="#chart_distance">Distance</a></li>
-                                    <li class="time"><a href="#chart_time">Time</a></li>
+                                    <li class="steps selected"><a href="#chart_steps"><span class="lbl_steps">Steps</span></a></li>
+                                    <li class="calories"><a href="#chart_calories"><span class="lbl_calories">Calories</span></a></li>
+                                    <li class="distance"><a href="#chart_distance"><span class="lbl_distance">Distance</span></a></li>
+                                    <li class="time"><a href="#chart_time"><span class="lbl_time">Time</span></a></li>
                                 </ul>
                                 <ul class="actual_charts">
                                     <li class="steps selected">
-                                        <div class="7day">7 Day Total: 52,724</div>
-                                        <div class="daily_average">Daily Average: 7,532</div>
+                                        <div class="7day"><span class="lbl_7daytotal">7 Day Total</span>: 52,724</div>
+                                        <div class="daily_average"><span class="lbl_daily_average">Daily Average</span>: 7,532</div>
                                         <ul class="bars">
-                                            <li class="bar1 Steps_1">1391</li>
-                                            <li class="bar2 Steps_2">0</li>
-                                            <li class="bar3 Steps_3">23254</li>
-                                            <li class="bar4 Steps_4">23318</li>
-                                            <li class="bar5 Steps_5">26140</li>
-                                            <li class="bar6 Steps_6">27000</li>
-                                            <li class="bar7 Steps_7">0</li>
+                                            <li class="bar1 Steps_1"></li>
+                                            <li class="bar2 Steps_2"></li>
+                                            <li class="bar3 Steps_3"></li>
+                                            <li class="bar4 Steps_4"></li>
+                                            <li class="bar5 Steps_5"></li>
+                                            <li class="bar6 Steps_6"></li>
+                                            <li class="bar7 Steps_7"></li>
                                         </ul>
                                         <ul class="yaxis">
                                             <li class="Yaxis_Steps_6"></li>
-                                            <li class="Yaxis_Steps_5">50,000</li>
-                                            <li class="Yaxis_Steps_4">40,000</li>
-                                            <li class="Yaxis_Steps_3">30,000</li>
-                                            <li class="Yaxis_Steps_2">20,000</li>
-                                            <li class="Yaxis_Steps_1">10,000</li>
+                                            <li class="Yaxis_Steps_5"></li>
+                                            <li class="Yaxis_Steps_4"></li>
+                                            <li class="Yaxis_Steps_3"></li>
+                                            <li class="Yaxis_Steps_2"></li>
+                                            <li class="Yaxis_Steps_1"></li>
                                         </ul>
+                                        <!--END li class="steps"-->
                                     </li>
-                                    <li class="calories">calories chart</li>
-                                    <li class="distance">distance chart</li>
-                                    <li class="time">time chart</li>
+                                    <li class="calories">
+                                        <div class="7day"><span class="lbl_7daytotal">7 Day Total</span>: 52,724</div>
+                                        <div class="daily_average"><span class="lbl_daily_average">Daily Average</span>: 7,532</div>
+                                        <ul class="bars">
+                                            <li class="bar1 Calories_1"></li>
+                                            <li class="bar2 Calories_2"></li>
+                                            <li class="bar3 Calories_3"></li>
+                                            <li class="bar4 Calories_4"></li>
+                                            <li class="bar5 Calories_5"></li>
+                                            <li class="bar6 Calories_6"></li>
+                                            <li class="bar7 Calories_7"></li>
+                                        </ul>
+                                        <ul class="yaxis">
+                                            <li class="Yaxis_Calories_6"></li>
+                                            <li class="Yaxis_Calories_5"></li>
+                                            <li class="Yaxis_Calories_4"></li>
+                                            <li class="Yaxis_Calories_3"></li>
+                                            <li class="Yaxis_Calories_2"></li>
+                                            <li class="Yaxis_Calories_1"></li>
+                                        </ul>
+                                        <!--END li class="calories"-->
+                                    </li>
+                                    <li class="distance">
+                                        <div class="7day"><span class="lbl_7daytotal">7 Day Total</span>: 52,724</div>
+                                        <div class="daily_average"><span class="lbl_daily_average">Daily Average</span>: 7,532</div>
+                                        <ul class="bars">
+                                            <li class="bar1 Distance_1"></li>
+                                            <li class="bar2 Distance_2"></li>
+                                            <li class="bar3 Distance_3"></li>
+                                            <li class="bar4 Distance_4"></li>
+                                            <li class="bar5 Distance_5"></li>
+                                            <li class="bar6 Distance_6"></li>
+                                            <li class="bar7 Distance_7"></li>
+                                        </ul>
+                                        <ul class="yaxis">
+                                            <li class="Yaxis_Distance_6"></li>
+                                            <li class="Yaxis_Distance_5"></li>
+                                            <li class="Yaxis_Distance_4"></li>
+                                            <li class="Yaxis_Distance_3"></li>
+                                            <li class="Yaxis_Distance_2"></li>
+                                            <li class="Yaxis_Distance_1"></li>
+                                        </ul>
+                                        <!--END li class="distance"-->
+                                    </li>
+                                    <li class="time">
+                                        <div class="7day"><span class="lbl_7daytotal">7 Day Total</span>: 52,724</div>
+                                        <div class="daily_average"><span class="lbl_daily_average">Daily Average</span>: 7,532</div>
+                                        <ul class="bars">
+                                            <li class="bar1 Time_1"></li>
+                                            <li class="bar2 Time_2"></li>
+                                            <li class="bar3 Time_3"></li>
+                                            <li class="bar4 Time_4"></li>
+                                            <li class="bar5 Time_5"></li>
+                                            <li class="bar6 Time_6"></li>
+                                            <li class="bar7 Time_7"></li>
+                                        </ul>
+                                        <ul class="yaxis">
+                                            <li class="Yaxis_Time_6"></li>
+                                            <li class="Yaxis_Time_5"></li>
+                                            <li class="Yaxis_Time_4"></li>
+                                            <li class="Yaxis_Time_3"></li>
+                                            <li class="Yaxis_Time_2"></li>
+                                            <li class="Yaxis_Time_1"></li>
+                                        </ul>
+                                        <!--END li class="time"-->
+                                    </li>
                                 </ul>
                                 <ul class="xaxis">
-                                    <li class="Xaxis_1">M</li>
-                                    <li class="Xaxis_2">T</li>
-                                    <li class="Xaxis_3">W</li>
-                                    <li class="Xaxis_4">TH</li>
-                                    <li class="Xaxis_5">F</li>
-                                    <li class="Xaxis_6">S</li>
-                                    <li class="Xaxis_7">SU</li>
+                                    <li class="Xaxis_1"></li>
+                                    <li class="Xaxis_2"></li>
+                                    <li class="Xaxis_3"></li>
+                                    <li class="Xaxis_4"></li>
+                                    <li class="Xaxis_5"></li>
+                                    <li class="Xaxis_6"></li>
+                                    <li class="Xaxis_7"></li>
                                 </ul>
-                                
+                                <!--END li class="chart" -->
                             </li>
-                            <!--END li class="chart" -->
+                            
                         </ul>
                          <!-- END ul class="inner_content"-->
                     </li>
                     <li class="timer">
-                        <span class="timer_lbl steps">Steps</span>
+                        <span class="lbl_steps timer_lbl steps">Steps</span>
                         <div id="stepsflip-counter" class="timer steps"></div>
                         
-                        <span class="timer_lbl calories">Calories</span>
+                        <span class="lbl_calories timer_lbl calories">Calories</span>
                         <div id="caloriesflip-counter" class="timer calories"></div>
                         
-                        <span class="timer_lbl distance">Distance</span>
+                        <span class="lbl_distance timer_lbl distance">Distance</span>
                         <div id="distanceflip-counter" class="timer distance"></div>
                         
-                        <span class="timer_lbl time">Time</span>
+                        <span class="lbl_time timer_lbl time">Time</span>
                         <div id="timeflip-counter" class="timer">
                             <div id="timeMinflip-counter" class="timer time"></div>
                             <span class="digit-separator">:</span>
                             <div id="timeSecflip-counter" class="timer time"></div>
                         </div>
-                        <div class="timer_lbl today">Today</div>
+                        <span class="lbl_today timer_lbl today">Today</span>
                     </li>
                 </ul>
             </div>

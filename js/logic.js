@@ -1,24 +1,34 @@
 //lets get it started... 
 var appData = {};
+var appLang = {};
+var currLang = "en";
+
 function doLoad(env){
 	
 	assignEventHandlers(env);
 	
-    getAppData(function(){
-		//show main wrapper
-		//$("#wrapper).delay(2000).fadeIn("slow");
+	getAppLanguage(function(){
 		
-		positionWidget(env);
-		
-		populateData(function(){
-			prepareChart("ul.actual_charts .steps");
-	        prepareChart("ul.actual_charts .calories");
-	        prepareChart("ul.actual_charts .distance");
-	        prepareChart("ul.actual_charts .time");
+		getAppData(function(){
+			//show main wrapper
+			//$("#wrapper).delay(2000).fadeIn("slow");
+			
+			positionWidget(env);
+			
+			populateData(function(){
+				prepareChart("ul.actual_charts .steps");
+				prepareChart("ul.actual_charts .calories");
+				prepareChart("ul.actual_charts .distance");
+				prepareChart("ul.actual_charts .time");
+				
+				translateTo(currLang);
+			});
+			
+			
+			
 		});
-		
-		
 	});
+    
 	
 	//prepare all the counters
 	initCounters();
@@ -112,6 +122,24 @@ function assignEventHandlers(env){
         doImperial();
 		return false;
     });
+	$(".doEnglish").click(function(){
+        currLang = "en";
+		translateTo("en");
+		$(".lbl_calories").css("font-size","inherit");
+        return false;
+    });
+	$(".doGerman").click(function(){
+        currLang = "de";
+		translateTo("de");
+		$(".lbl_calories").css("font-size","13px");
+        return false;
+    });
+	$(".doFrench").click(function(){
+        currLang = "fr";
+		translateTo("fr");
+		$(".lbl_calories").css("font-size","inherit");
+        return false;
+    });
 	//ENTER key
 	$('body').keypress(function(e){
         if (e.which == 13) {        
@@ -180,7 +208,7 @@ function positionWidget(env){
 	if (env == "app") {
         window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
         window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
-        //alert(air.Capabilities.language);
+        currLang = air.Capabilities.language;
     }
 }
 function initCounters(){
@@ -198,6 +226,7 @@ function initCounters(){
 
 function populateData(callback){
 	$(".First_Name").html(appData.First_Name);
+	
 	$(".Xaxis_1").html(appData.Xaxis_1);
 	$(".Xaxis_2").html(appData.Xaxis_2);
 	$(".Xaxis_3").html(appData.Xaxis_3);
@@ -205,18 +234,21 @@ function populateData(callback){
 	$(".Xaxis_5").html(appData.Xaxis_5);
 	$(".Xaxis_6").html(appData.Xaxis_6);
 	$(".Xaxis_7").html(appData.Xaxis_7);
+	
 	$(".Yaxis_Steps_1").html(appData.Yaxis_Steps_1);
 	$(".Yaxis_Steps_2").html(appData.Yaxis_Steps_2);
 	$(".Yaxis_Steps_3").html(appData.Yaxis_Steps_3);
 	$(".Yaxis_Steps_4").html(appData.Yaxis_Steps_4);
 	$(".Yaxis_Steps_5").html(appData.Yaxis_Steps_5);
 	$(".Yaxis_Steps_6").html(appData.Yaxis_Steps_6);
+	
 	$(".Yaxis_Calories_1").html(appData.Yaxis_Calories_1);
 	$(".Yaxis_Calories_2").html(appData.Yaxis_Calories_2);
 	$(".Yaxis_Calories_3").html(appData.Yaxis_Calories_3);
 	$(".Yaxis_Calories_4").html(appData.Yaxis_Calories_4);
 	$(".Yaxis_Calories_5").html(appData.Yaxis_Calories_5);
 	$(".Yaxis_Calories_6").html(appData.Yaxis_Calories_6);
+	
 	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_1);
 	$(".Yaxis_Distance_2").html(appData.Yaxis_Distance_2);
 	$(".Yaxis_Distance_3").html(appData.Yaxis_Distance_3);
@@ -230,6 +262,7 @@ function populateData(callback){
 	$(".Yaxis_Time_4").html(appData.Yaxis_Time_4);
 	$(".Yaxis_Time_5").html(appData.Yaxis_Time_5);
 	$(".Yaxis_Time_6").html(appData.Yaxis_Time_6);
+	
 	$(".Steps_1").html(appData.Steps_1);
 	$(".Steps_2").html(appData.Steps_2);
 	$(".Steps_3").html(appData.Steps_3);
@@ -237,6 +270,7 @@ function populateData(callback){
 	$(".Steps_5").html(appData.Steps_5);
 	$(".Steps_6").html(appData.Steps_6);
 	$(".Steps_7").html(appData.Steps_7);
+	
 	$(".Calories_1").html(appData.Calories_1);
 	$(".Calories_2").html(appData.Calories_2);
 	$(".Calories_3").html(appData.Calories_3);
@@ -244,7 +278,8 @@ function populateData(callback){
 	$(".Calories_5").html(appData.Calories_5);
 	$(".Calories_6").html(appData.Calories_6);
 	$(".Calories_7").html(appData.Calories_7);
-    $(".Distance_1").html(appData.Distance_1);
+    
+	$(".Distance_1").html(appData.Distance_1);
     $(".Distance_2").html(appData.Distance_2);
     $(".Distance_3").html(appData.Distance_3);
     $(".Distance_4").html(appData.Distance_4);
@@ -265,7 +300,7 @@ function populateData(callback){
 
 function doImperial(){
 	//alert("imperial");
-	console.log(appData);
+	//console.log(appData);
 	$(".Distance_1").html(appData.Distance_1);
     $(".Distance_2").html(appData.Distance_2);
     $(".Distance_3").html(appData.Distance_3);
@@ -284,7 +319,7 @@ function doImperial(){
 	prepareChart("ul.actual_charts .distance");
 }
 function doMetric(){
-    console.log(appData);
+    //console.log(appData);
     $(".Distance_1").html(appData.Distance_Metric_1);
     $(".Distance_2").html(appData.Distance_Metric_2);
     $(".Distance_3").html(appData.Distance_Metric_3);
@@ -301,6 +336,21 @@ function doMetric(){
     $(".Yaxis_Distance_6").html(appData.Yaxis_Distance_Metric_6);
 	
 	prepareChart("ul.actual_charts .distance");
+}
+function translateTo(lang){
+	//console.log(appLang[lang]);
+	$("#main span").each(function(){
+		
+		var this_class = $(this).prop("class").split(" ")[0];
+		
+		//console.log(this_class, appLang[lang][this_class]);
+		if(typeof appLang[lang][this_class] !== "undefined"){
+			$(this).html(appLang[lang][this_class]);
+		}
+	});
+	
+	
+	
 }
 function getAppData(callback){
 	appData = {
@@ -388,6 +438,80 @@ function getAppData(callback){
 	};
 	callback.call();
 
+}
+function getAppLanguage(callback){
+	appLang = {
+	    "en": {
+	        "lbl_steps": "Steps",
+	        "lbl_distance": "Distance",
+	        "lbl_calories": "Calories",
+	        "lbl_time": "Time",
+	        "lbl_hr": "hr.",
+	        "lbl_min": "min.",
+	        "lbl_sec": "sec.",
+	        "lbl_today": "Today",
+	        "lbl_hrs": "hrs.",
+	        "lbl_monday": "M",
+	        "lbl_tuesday": "T",
+	        "lbl_wednesday": "W",
+	        "lbl_thursday": "TH",
+	        "lbl_friday": "F",
+	        "lbl_saturday": "S",
+	        "lbl_sunday": "SU",
+	        "lbl_logout": "Logout",
+	        "lbl_settings": "Settings",
+	        "lbl_sync": "Account Sync",
+	        "lbl_7daytotal": "7-Day Total",
+	        "lbl_daily_average": "Daily Average",
+	        "lbl_last7days": "Last 7 Days",
+	        "lbl_bt_off": "OFF",
+	        "lbl_bt_search": "Searching…",
+	        "lbl_bt_connected": "Connected",
+	        "lbl_treadmill_desk": "Treadmill Desk",
+	        "msg_no_treadmill_yet": "There is no treadmill desk data to display yet.",
+	        "msg_no_treadmill_7days": "There is no treadmill desk data for the previous 7 days.",
+	        "msg_treadmill_connect": "Do you wish to connect to the treadmill desk?",
+	        "msg_treadmill_connected": "Connected with treadmill desk",
+	        "msg_uploading": "uploading exercise data",
+	        "msg_upload_complete": "upload complete"
+	    },
+	    "de": {
+	        "lbl_steps": "Schritte",
+	        "lbl_distance": "Strecke",
+	        "lbl_calories": "Kalorienverbrauch",
+	        "lbl_time": "Zeit",
+	        "lbl_hr": "Std.",
+	        "lbl_min": "min.",
+	        "lbl_sec": "sek.",
+	        "lbl_today": "Heute",
+	        "lbl_hrs": "std.",
+	        "lbl_monday": "M",
+	        "lbl_tuesday": "D",
+	        "lbl_wednesday": "MI",
+	        "lbl_thursday": "DO",
+	        "lbl_friday": "F",
+	        "lbl_saturday": "S",
+	        "lbl_sunday": "SO",
+	        "lbl_logout": "Verlassen",
+	        "lbl_settings": "Einstellungen",
+	        "lbl_sync": "Sync",
+	        "lbl_7daytotal": "Gesamt 7 Tage",
+	        "lbl_daily_average": "Durchschnitt täglich",
+	        "lbl_last7days": "die letzten 7 Tage",
+	        "lbl_bt_off": "aus",
+	        "lbl_bt_search": "wird gesucht…",
+	        "lbl_bt_connected": "verbunden",
+	        "lbl_treadmill_desk": "Laufbandkonsole",
+	        "msg_no_treadmill_yet": "Es können keine Laufbanddaten angezeigt werden.",
+	        "msg_no_treadmill_7days": "Keine Daten aus den letzten 7 Tagen.",
+	        "msg_treadmill_connect": "Wollen Sie eine Verbindung zu der Laufbandkonsole herstellen?",
+	        "msg_treadmill_connected": "Verbindung mit der Laufbandkonsole besteht",
+	        "msg_uploading": "Trainingsdaten werden übertragen",
+	        "msg_upload_complete": "Datenübertragung vollständig"
+	    },
+	    "fr": {}
+	};
+	callback.call();
 }
 
 //UTIL
