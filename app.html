@@ -25,45 +25,46 @@
 		
 	</head>
 	<body onload="doLoad('app');">
-		<div id="wrapper">
+        <div id="wrapper">
             <!-- login_items -->
             <div id="login_items">
                 <div>
-                    <label class="inputlbl" for="username">
+                    <span class="lbl_lastname inputlbl" for="username">
                         Last Name
-                    </label>
+                    </span>
                     <input id="username" type="text" class="textb" />
                 </div>
                 <div>
-                    <label class="inputlbl" for="password">
+                    <span class="lbl_password inputlbl" for="password">
                         Password
-                    </label>
+                    </span>
                     <input id="password" type="password" class="textb" />
                 </div>
                 <div style="padding-left:82px;">
                     <input id="remember" type="checkbox" />
-                    <label for="remember">
+                    <span class="lbl_remember" for="remember">
                         Remember Me
-                    </label>
+                    </span>
                 </div>
                 <div>
                     <label class="inputlbl">
                         &nbsp;
                     </label>
-                    <input id="signin" type="button" value="Sign In" class="button" /><input id="exit" type="button" value="Exit" class="button" />
+                    <input id="signin" type="button" value="Sign In" class="button" />
+                    <input id="exit" type="button" value="Exit" class="button" />
                 </div>
                 <div id="messages" style="width:247px;font-size:12px;padding-top: 6px;">
                     <div id="progress">
-                        Loading <img src="icons/loading.gif" alt="loading" width="43" height="11" />
+                        <img src="icons/loading.gif" alt="loading" width="43" height="11" />
                     </div>
                     <div id="invalid_login" style="position: relative;top: -5px;">
-                        Invalid Username and Password!
+                        <span class="lbl_invalid_password">Invalid Username and Password!
                         <br/>
                         Please Try Again or Click <a id="reminder_link" href="#">here</a>
-                        for a reminder.
+                        for a reminder.</span>
                     </div>
-                    <div class="intro">
-                        Use to view your treadmill desk results in real time on your computer.
+                    <div class="intro" style="position: relative;top: -5px;">
+                        <span class="lbl_intro">Use to view your treadmill desk results in real time on your computer.</span>
                     </div>
                 </div>
                 <div id="footer">
@@ -73,11 +74,11 @@
             <!--END #login_items -->
             <div id="main">
                 <ul class="sections">
-                    <li class="pull_tab close_all">
+                    <li class="pull_tab">
                     </li>
                     <li class="inner">
                         <ul class="inner_content">
-                            <li class="drop_tab">
+                            <li class="drop_tab close_inner">
                                 <div class="alert_message">
                                     <a href="#close_message" class="close_message">X</a>
                                     <p>
@@ -109,10 +110,10 @@
                                                     <hr/>
                                                     <p>
                                                         <em>Language</em>
-                                                        <a class="doEnglish" href="#en">English</a>
-                                                        <a class="doGerman" href="#de">German</a>
-                                                        <a class="doFrench" href="#fr">French</a>
-                                                        <a class="doSpanish" href="#fr">Spanish</a>
+                                                        <a class="translate" rel="en" href="#en">English</a>
+                                                        <a class="translate" rel="de" href="#de">German</a>
+                                                        <!--<a class="translate" rel="fr" href="#fr">French</a>
+                                                        <a class="translate" rel="es" href="#fr">Spanish</a>-->
                                                     </p>
                                                 </div>
                                             </li>
@@ -139,10 +140,10 @@
                                 <ul class="actual_charts">
                                     <li class="steps selected">
                                         <div class="7day">
-                                            <span class="lbl_7daytotal">7 Day Total</span>: 52,724
+                                            <span class="lbl_7daytotal">7 Day Total</span>: <span class="Steps_Total"></span>
                                         </div>
                                         <div class="daily_average">
-                                            <span class="lbl_daily_average">Daily Average</span>: 7,532
+                                            <span class="lbl_daily_average">Daily Average</span>: <span class="Steps_Daily_Average"></span>
                                         </div>
                                         <ul class="bars">
                                             <li class="bar1 Steps_1">
@@ -178,10 +179,10 @@
                                     </li>
                                     <li class="calories">
                                         <div class="7day">
-                                            <span class="lbl_7daytotal">7 Day Total</span>: 52,724
+                                            <span class="lbl_7daytotal">7 Day Total</span>: <span class="Calories_Total"></span>
                                         </div>
                                         <div class="daily_average">
-                                            <span class="lbl_daily_average">Daily Average</span>: 7,532
+                                            <span class="lbl_daily_average">Daily Average</span>: <span class="Calories_Daily_Average"></span>
                                         </div>
                                         <ul class="bars">
                                             <li class="bar1 Calories_1">
@@ -217,10 +218,10 @@
                                     </li>
                                     <li class="distance">
                                         <div class="7day">
-                                            <span class="lbl_7daytotal">7 Day Total</span>: 52,724
+                                            <span class="lbl_7daytotal">7 Day Total</span>: <span class="Distance_Total"></span>
                                         </div>
                                         <div class="daily_average">
-                                            <span class="lbl_daily_average">Daily Average</span>: 7,532
+                                            <span class="lbl_daily_average">Daily Average</span>: <span class="Distance_Daily_Average"></span>
                                         </div>
                                         <ul class="bars">
                                             <li class="bar1 Distance_1">
@@ -256,10 +257,10 @@
                                     </li>
                                     <li class="time">
                                         <div class="7day">
-                                            <span class="lbl_7daytotal">7 Day Total</span>: 52,724
+                                            <span class="lbl_7daytotal">7 Day Total</span>: <span class="Time_Total"></span>
                                         </div>
                                         <div class="daily_average">
-                                            <span class="lbl_daily_average">Daily Average</span>: 7,532
+                                            <span class="lbl_daily_average">Daily Average</span>: <span class="Time_Daily_Average"></span>
                                         </div>
                                         <ul class="bars">
                                             <li class="bar1 Time_1">

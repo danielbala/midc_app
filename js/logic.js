@@ -14,7 +14,7 @@ var OFFLINE = false;
 //lets get it started... 
 var appData = {};
 var appLang = {};
-var currLang = "en";
+var currLang = "de"; //default language
 
 //global events
 try{
@@ -25,9 +25,29 @@ function doLoad(env){
 	
 	//checkForUpdate();
 	
+	//remember user init
+    
+	if (env == "app") {
+		rememberUser();
+	}
+	
 	assignEventHandlers(env);
 	
 	getAppLanguage(function(){
+		//system language
+		try {
+			currLang = air.Capabilities.language;
+			
+			
+			//if they ever change language it is set in local storage... retrieve it
+			var setLang = air.EncryptedLocalStore.getItem('appLang');
+			if (setLang != null) {
+				currLang = setLang.readUTFBytes(setLang.bytesAvailable);
+			}
+		}catch (e) {}
+		
+		//translateApp
+		translateTo(currLang);
 		//show main wrapper
 		$("#wrapper").delay(2000).fadeIn("slow");
 		
@@ -71,7 +91,7 @@ function assignEventHandlers(env){
     				prepareChart("ul.actual_charts .distance");
     				prepareChart("ul.actual_charts .time");
 
-    				translateTo(currLang);
+    				//translateTo(currLang);
 
     				//position, set defaults and sticky
     	            positionWidget(env);
@@ -90,10 +110,10 @@ function assignEventHandlers(env){
         
     });
     $('.close_app').click(function(){
-        doSignOut();
+		doSignOut();
     });
     $('#exit').click(function(){
-        doSignOut();
+        justQuit();
     });
     //forgot my password link click
     $('#reminder_link').click(function(){
@@ -103,11 +123,13 @@ function assignEventHandlers(env){
 
 	});
     $(".pull_tab").live("click", function(){
-        if($(".pull_tab").hasClass("close_all")){
+        if($(".pull_tab").hasClass("close_inner")){
             $(".inner").hide("slow", function(){
-                $(".timer").hide("slow", function(){
-                    $(".pull_tab").addClass("close_tab open_timer").removeClass("close_all");
-                });
+                $(".pull_tab").addClass("close_timer").removeClass("close_inner");
+            });
+        }else if($(".pull_tab").hasClass("close_timer")){
+            $(".timer").hide("slow", function(){
+                $(".pull_tab").removeClass("close_timer").addClass("close_tab open_timer");
             });
         }else if($(".pull_tab").hasClass("open_timer")){
             $(".timer").show("fast", function(){
@@ -115,7 +137,7 @@ function assignEventHandlers(env){
             });
         }else{
             $(".inner").show("slow", function(){
-                $(".pull_tab").addClass("close_all").removeClass("open_inner close_tab");
+                $(".pull_tab").addClass("close_inner").removeClass("open_inner close_tab");
             });
         }
         
@@ -142,8 +164,7 @@ function assignEventHandlers(env){
         $(".settings_menu").toggleClass("settings_menu_on");
     });
     $(".do_sync").click(function(){
-        //TODO LOCALIZE
-        showMessage(appLang[currLang]["msg_uploading"]);
+        doSync(false);// quit app = false
         return false;
     });
     $(".chart_menu li").click(function(){
@@ -168,20 +189,22 @@ function assignEventHandlers(env){
         doImperial();
 		return false;
     });
-	$(".doEnglish").click(function(){
-        currLang = "en";
-		translateTo("en");
+	$(".translate").click(function(){
+        currLang = $(this).attr("rel");
+		translateTo($(this).attr("rel"));
         return false;
     });
-	$(".doGerman").click(function(){
-        currLang = "de";
-		translateTo("de");
-        return false;
+	$(".doSync").live("click", function(){
+	   doSync(true);//quit app = true
+	   return false;
+	});
+	$(".justQuit").live("click", function(){
+       justQuit();
+	   return false;
     });
-	$(".doFrench").click(function(){
-        currLang = "fr";
-		translateTo("fr");
-        return false;
+	//login/logout
+    $('#remember').click(function(){
+        doRemember();
     });
 	//ENTER key
 	//enter should submit
@@ -192,14 +215,14 @@ function hideLoginItems(callback){
     $("#wrapper").css("background-image","none").css("background-color","transparent");
     
     $("#login_items div").fadeOut("fast", function(){
-        $("#login_items").fadeOut("slow", function(){
+        $("#login_items").fadeOut("1200", function(){
 
         }); 
     });
     
     setTimeout(function(){
         callback();
-    }, 200);
+    }, 1500);
 }
 function prepareChart(item){
 	var chartSpecs = getChartSpecs(item);
@@ -259,15 +282,9 @@ function positionWidget(env){
 	if (env == "app") {
         window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
         window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
-        currLang = air.Capabilities.language;
-		
-		var setLang = air.EncryptedLocalStore.getItem('appLang');
+        
 	    var selectedChart = air.EncryptedLocalStore.getItem('selectedChart');
 	    
-	    if (setLang != null) {
-	        currLang = setLang.readUTFBytes(setLang.bytesAvailable);
-			translateTo(currLang);
-	    }
 		if (selectedChart != null) {
             //SET LAST SELECTED CHART
 			var currChart = selectedChart.readUTFBytes(selectedChart.bytesAvailable);
@@ -278,7 +295,6 @@ function positionWidget(env){
             $(".settings_menu").removeClass("settings_menu_on");
           
         }
-		
 		
     }
 }
@@ -376,7 +392,32 @@ function populateData(callback){
     	$(".Time_5").html(appData.Time_5);
     	$(".Time_6").html(appData.Time_6);
     	$(".Time_7").html(appData.Time_7);
+		
+		$(".Steps_Total").html(appData.Steps_Total);
+        $(".Steps_Daily_Average").html(appData.Steps_Daily_Average);
         
+		$(".Calories_Total").html(appData.Calories_Total);
+        $(".Calories_Daily_Average").html(appData.Calories_Daily_Average);
+        
+		$(".Distance_Total").html(appData.Distance_Total);
+        
+		$(".Distance_Daily_Average").html(appData.Distance_Daily_Average);
+		
+		$(".Time_Total").html(appData.Time_Total);
+		$(".Time_Daily_Average").html(appData.Time_Daily_Average);
+		
+		
+        
+		//TRANSLATE DAY OF THE WEEK ABBREVIATIONS
+	    if (typeof appData.Xaxis_1 != "undefined") {
+	        $(".Xaxis_1").html(appLang[currLang]["lbl_" + appData.Xaxis_1.toLowerCase()]);
+	        $(".Xaxis_2").html(appLang[currLang]["lbl_" + appData.Xaxis_2.toLowerCase()]);
+	        $(".Xaxis_3").html(appLang[currLang]["lbl_" + appData.Xaxis_3.toLowerCase()]);
+	        $(".Xaxis_4").html(appLang[currLang]["lbl_" + appData.Xaxis_4.toLowerCase()]);
+	        $(".Xaxis_5").html(appLang[currLang]["lbl_" + appData.Xaxis_5.toLowerCase()]);
+	        $(".Xaxis_6").html(appLang[currLang]["lbl_" + appData.Xaxis_6.toLowerCase()]);
+	        $(".Xaxis_7").html(appLang[currLang]["lbl_" + appData.Xaxis_7.toLowerCase()]);
+	    }
         callback();
         return false;
     });
@@ -393,6 +434,10 @@ function doImperial(){
     $(".Distance_5").html(appData.Distance_5);
     $(".Distance_6").html(appData.Distance_6);
     $(".Distance_7").html(appData.Distance_7);
+	
+	$(".Distance_Total").html(appData.Distance_Total);
+    
+    $(".Distance_Daily_Average").html(appData.Distance_Metric_Daily_Average);
 	
 	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_1);
     $(".Yaxis_Distance_2").html(appData.Yaxis_Distance_2);
@@ -413,6 +458,10 @@ function doMetric(){
     $(".Distance_6").html(appData.Distance_Metric_6);
     $(".Distance_7").html(appData.Distance_Metric_7);
 	
+	$(".Distance_Total").html(appData.Distance_Metric_Total);
+        
+    $(".Distance_Daily_Average").html(appData.Distance_Metric_Daily_Average);
+	
 	$(".Yaxis_Distance_1").html(appData.Yaxis_Distance_Metric_1);
     $(".Yaxis_Distance_2").html(appData.Yaxis_Distance_Metric_2);
     $(".Yaxis_Distance_3").html(appData.Yaxis_Distance_Metric_3);
@@ -424,7 +473,8 @@ function doMetric(){
 }
 function translateTo(lang){
 	//console.log(appLang[lang]);
-	$("#main span").each(function(){
+	//FIND ALL span elements, and get their first assigned classname and check translations to see if it exists
+	$("body span").each(function(){
 		
 		var this_class = $(this).prop("class").split(" ")[0];
 		
@@ -434,20 +484,26 @@ function translateTo(lang){
 		}
 	});
 	//TRANSLATE DAY OF THE WEEK ABBREVIATIONS
-	$(".Xaxis_1").html(appLang[lang]["lbl_"+appData.Xaxis_1.toLowerCase()]);
-    $(".Xaxis_2").html(appLang[lang]["lbl_"+appData.Xaxis_2.toLowerCase()]);
-    $(".Xaxis_3").html(appLang[lang]["lbl_"+appData.Xaxis_3.toLowerCase()]);
-    $(".Xaxis_4").html(appLang[lang]["lbl_"+appData.Xaxis_4.toLowerCase()]);
-    $(".Xaxis_5").html(appLang[lang]["lbl_"+appData.Xaxis_5.toLowerCase()]);
-    $(".Xaxis_6").html(appLang[lang]["lbl_"+appData.Xaxis_6.toLowerCase()]);
-    $(".Xaxis_7").html(appLang[lang]["lbl_"+appData.Xaxis_7.toLowerCase()]);
+	if (typeof appData.Xaxis_1 != "undefined") {
+		$(".Xaxis_1").html(appLang[lang]["lbl_" + appData.Xaxis_1.toLowerCase()]);
+		$(".Xaxis_2").html(appLang[lang]["lbl_" + appData.Xaxis_2.toLowerCase()]);
+		$(".Xaxis_3").html(appLang[lang]["lbl_" + appData.Xaxis_3.toLowerCase()]);
+		$(".Xaxis_4").html(appLang[lang]["lbl_" + appData.Xaxis_4.toLowerCase()]);
+		$(".Xaxis_5").html(appLang[lang]["lbl_" + appData.Xaxis_5.toLowerCase()]);
+		$(".Xaxis_6").html(appLang[lang]["lbl_" + appData.Xaxis_6.toLowerCase()]);
+		$(".Xaxis_7").html(appLang[lang]["lbl_" + appData.Xaxis_7.toLowerCase()]);
+	}
+	
+	$("#signin").val(appLang[currLang]["btn_signin"]);
+	$("#exit").val(appLang[currLang]["btn_exit"]);
+	
 	
 	//german text is too long
-	if(lang == "de"){
+	/*if(lang == "de"){
 	    $(".lbl_calories").css("font-size","13px");
 	}else{
 	    $(".lbl_calories").css("font-size","inherit");
-	}
+	}*/
 	
 	//STORE LAST SELECTED LANGUAGE
 	try{
@@ -458,97 +514,16 @@ function translateTo(lang){
 	
 	
 }
-function getAppData(callback){
-	appData = {
-	    "First_Name": "Kelly",
-	    "Last_Name": "Schuknecht",
-	    "Xaxis_1": "Monday",
-	    "Xaxis_2": "Tuesday",
-	    "Xaxis_3": "Wednesday",
-	    "Xaxis_4": "Thursday",
-	    "Xaxis_5": "Friday",
-	    "Xaxis_6": "Saturday",
-	    "Xaxis_7": "Sunday",
-	    "Yaxis_Steps_1": "10,000",
-	    "Yaxis_Steps_2": "20,000",
-	    "Yaxis_Steps_3": "30,000",
-	    "Yaxis_Steps_4": "40,000",
-	    "Yaxis_Steps_5": "50,000",
-	    "Yaxis_Steps_6": "",
-	    "Yaxis_Calories_1": "400",
-	    "Yaxis_Calories_2": "800",
-	    "Yaxis_Calories_3": "1200",
-	    "Yaxis_Calories_4": "1,600",
-	    "Yaxis_Calories_5": "2,000",
-	    "Yaxis_Calories_6": "",
-	    "Yaxis_Distance_1": "4",
-	    "Yaxis_Distance_2": "8",
-	    "Yaxis_Distance_3": "12",
-	    "Yaxis_Distance_4": "16",
-	    "Yaxis_Distance_5": "20",
-	    "Yaxis_Distance_6": "",
-	    "Yaxis_Distance_Metric_1": "6",
-	    "Yaxis_Distance_Metric_2": "12",
-	    "Yaxis_Distance_Metric_3": "18",
-	    "Yaxis_Distance_Metric_4": "24",
-	    "Yaxis_Distance_Metric_5": "30",
-	    "Yaxis_Distance_Metric_6": "36",
-	    "Yaxis_Time_1": "20",
-	    "Yaxis_Time_2": "40",
-	    "Yaxis_Time_3": "60",
-	    "Yaxis_Time_4": "80",
-	    "Yaxis_Time_5": "100",
-	    "Yaxis_Time_6": "120",
-	    "Steps_1": 23254,
-	    "Steps_2": 23318,
-	    "Steps_3": 26140,
-	    "Steps_4": 27000,
-	    "Steps_5": 0,
-	    "Steps_6": 0,
-	    "Steps_7": 0,
-	    "Calories_1": 1020,
-	    "Calories_2": 966,
-	    "Calories_3": 915,
-	    "Calories_4": 1034,
-	    "Calories_5": 0,
-	    "Calories_6": 0,
-	    "Calories_7": 0,
-	    "Distance_1": 9.5,
-	    "Distance_2": 8.9,
-	    "Distance_3": 8.5,
-	    "Distance_4": 10,
-	    "Distance_5": 8,
-	    "Distance_6": 0,
-	    "Distance_7": 0,
-	    "Distance_Metric_1": 15.3,
-	    "Distance_Metric_2": 14.3,
-	    "Distance_Metric_3": 13.7,
-	    "Distance_Metric_4": 16.1,
-	    "Distance_Metric_5": 12.9,
-	    "Distance_Metric_6": 0,
-	    "Distance_Metric_7": 0,
-	    "Time_1": 301,
-	    "Time_2": 304,
-	    "Time_3": 398,
-	    "Time_4": 349,
-	    "Time_5": 300,
-	    "Time_6": 0,
-	    "Time_7": 0,
-	    "Exercise_ID": "",
-	    "Exercise_Name": "",
-	    "Exercise_Description": "",
-	    "Exercise_Progression": "",
-	    "Exercise_Warmup": "",
-	    "Exercise_Duration": "",
-	    "Exercise_Cooldown": ""
-	};
-	callback.call();
 
-}
 function getAppLanguage(callback){
 	appLang = {
 	    "en": {
-	        "lbl_steps": "Steps",
+	        "lbl_lastname": "Last Name",
+			"lbl_password": "Password",
+			"lbl_remember": "Remember Me",
+			"lbl_invalid_password": "Invalid Username and Password!<br/>Please Try Again or Click <a id='reminder_link' href='#'>here</a> for a reminder.",
+			"lbl_intro": "Use to view your treadmill desk results in real time on your computer.",
+			"lbl_steps": "Steps",
 	        "lbl_distance": "Distance",
 	        "lbl_calories": "Calories",
 	        "lbl_time": "Time",
@@ -567,6 +542,10 @@ function getAppLanguage(callback){
 	        "lbl_logout": "Logout",
 	        "lbl_settings": "Settings",
 	        "lbl_sync": "Account Sync",
+			"btn_confirm_sync": "Sync",
+			"btn_just_quit": "Just Quit",
+			"btn_signin":"Sign In",
+			"btn_exit": "Exit",
 	        "lbl_7daytotal": "7-Day Total",
 	        "lbl_daily_average": "Daily Average",
 	        "lbl_last7days": "Last 7 Days",
@@ -578,13 +557,20 @@ function getAppLanguage(callback){
 	        "msg_no_treadmill_7days": "There is no treadmill desk data for the previous 7 days.",
 	        "msg_treadmill_connect": "Do you wish to connect to the treadmill desk?",
 	        "msg_treadmill_connected": "Connected with treadmill desk",
-	        "msg_uploading": "uploading exercise data",
-	        "msg_upload_complete": "upload complete"
+	        "msg_uploading": "uploading exercise data <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
+	        "msg_upload_complete": "upload complete",
+			"msg_session_ending": "IHP Data Communicator Session Ending <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
+			"msg_sync_before_quit": "Do you want to Sync before you quit?"
 	    },
 	    "de": {
+			"lbl_lastname": "Nachname",
+            "lbl_password": "Passwort",
+            "lbl_remember": "Remember Me",
+			"lbl_invalid_password": "Ung&uuml;ltiger Benutzername und Passwort!<br/>Bitte versuchen Sie es oder Klicken Sie <a id='reminder_link' href='#'>hier</a> f&uuml;r eine Erinnerung.",
+            "lbl_intro": "Verwenden Sie auf Ihrem Laufband Schreibtisch Ergebnisse in Echtzeitsehen auf Ihrem Computer.",
 	        "lbl_steps": "Schritte",
 	        "lbl_distance": "Strecke",
-	        "lbl_calories": "Kalorienverbrauch",
+	        "lbl_calories": "Kalorien",
 	        "lbl_time": "Zeit",
 	        "lbl_hr": "Std.",
 	        "lbl_min": "min.",
@@ -601,6 +587,10 @@ function getAppLanguage(callback){
 	        "lbl_logout": "Verlassen",
 	        "lbl_settings": "Einstellungen",
 	        "lbl_sync": "Sync",
+			"btn_confirm_sync": "Sync",
+			"btn_just_quit": "Einfach Aufh&ouml;ren",
+			"btn_signin":"Login",
+            "btn_exit": "Verlassen",
 	        "lbl_7daytotal": "Gesamt 7 Tage",
 	        "lbl_daily_average": "Durchschnitt t&auml;glich",
 	        "lbl_last7days": "die letzten 7 Tage",
@@ -612,8 +602,10 @@ function getAppLanguage(callback){
 	        "msg_no_treadmill_7days": "Keine Daten aus den letzten 7 Tagen.",
 	        "msg_treadmill_connect": "Wollen Sie eine Verbindung zu der Laufbandkonsole herstellen?",
 	        "msg_treadmill_connected": "Verbindung mit der Laufbandkonsole besteht",
-	        "msg_uploading": "Trainingsdaten werden &uuml;bertragen",
-	        "msg_upload_complete": "Daten&uuml;bertragung vollst&auml;ndig"
+	        "msg_uploading": "Trainingsdaten werden &uuml;bertragen   <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
+	        "msg_upload_complete": "Daten&uuml;bertragung vollst&auml;ndig",
+			"msg_session_ending": "IHP Datenkommunikator Sitzungsende   <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
+			"msg_sync_before_quit": "Wollen Sie synchronisieren, bevor Sie aufh&uuml;ren?"
 	    },
 	    "fr": {}
 	};
@@ -650,42 +642,42 @@ function doSignIn(callback){
         //air.trace(return_data[0]);
         
         if (return_data[0] == "success") {
-
-    		if (document.getElementById('remember').checked) {
-
-    			data = new air.ByteArray();
-    			data.writeUTFBytes(username);
-    			air.EncryptedLocalStore.setItem('username', data);
-
-    			data = new air.ByteArray();
-    			data.writeUTFBytes(password);
-    			air.EncryptedLocalStore.setItem('password', data);
-    			
-    		}
-    		else {
-    			removeUser();
-
-    		}//END if remember checked 
-    		
-    		//MOVE ON
+		
+			if (document.getElementById('remember').checked) {
+				
+				data = new air.ByteArray();
+				data.writeUTFBytes(username);
+				air.EncryptedLocalStore.setItem('username', data);
+				
+				data = new air.ByteArray();
+				data.writeUTFBytes(password);
+				air.EncryptedLocalStore.setItem('password', data);
+				
+			}
+			else {
+				removeUser();
+				
+			}//END if remember checked 
+			//MOVE ON
 			callback.call();
 			return false;
 			
 			
-    	}//END if(response == "success"){
-    	else 
-    		if (response == "fail") {
-
-    			removeUser();
-    			
-                $("#progress").hide();
-                $(".intro").hide();
-    			$('#invalid_login').fadeIn('fast');
-
-    			//reset username and password	 
-    			username = document.getElementById('username').value = '';
-    			password = document.getElementById('password').value = '';
-    		}//END else if(response == "fail")
+		}//END if(response == "success"){
+		else {
+			if (response == "fail") {
+			
+				removeUser();
+				
+				$("#progress").hide();
+				$(".intro").hide();
+				$('#invalid_login').fadeIn('fast');
+				
+				//reset username and password	 
+				username = document.getElementById('username').value = '';
+				password = document.getElementById('password').value = '';
+			}//END else if(response == "fail")
+		}
 	});
 	
     return false;
@@ -694,45 +686,68 @@ function doSignIn(callback){
 function doSignOut(){
     rememberUser();
     var calledp = false;
-    showMessage("IHP Data Communicator session ending...<img src='icons/loading.gif' alt='loading' width='43' height='11' />", function(){
-	    setTimeout(function(){
-	        hideMessage();
-	        $('#main, #login_items').fadeOut('slow', function(){
-
-
-        		if (ID_NUMBER !== null && typeof ID_NUMBER != "undefined" ) {
-                    //PUTBACK
-        			/*var urlString = IHPPROCESS_URL + ID_NUMBER;
-        			var urlReqx = new air.URLRequest(urlString);
-
-        			var urlStreamx = new air.URLLoader();
-        			try {
-        				if(!calledp){
-        					air.trace("call processx: " + urlString);
-        					urlStreamx.load(urlReqx);
-        					calledp = true;
-        				}
-        			} 
-        			catch (error) {
-        				calledp = false;
-        				alert("Could not call the process script.");
-        			}*/
-        		}
-	        
-	            try{air.NativeApplication.nativeApplication.exit();}
-    			catch(e){}
-	        });
-	        
-	        
-	    },2000);
-	    
+	$(".inner").show("slow", function(){
+        $(".pull_tab").addClass("close_inner").removeClass("close_timer open_inner close_tab");
+    });
+	showMessage(appLang[currLang]["msg_sync_before_quit"]+ " <input class='doSync button' type='button' value='"+appLang[currLang]["btn_confirm_sync"]+"'/><input class='justQuit button' type='button' value='"+appLang[currLang]["btn_just_quit"]+"' />");
 	
+    
+}
+function doSync(quit_app){
+    showMessage(appLang[currLang]["msg_uploading"], function(){
+		
+		if (ID_NUMBER !== null && typeof ID_NUMBER != "undefined" ) {
+            //PUTBACK
+            /*var urlString = IHPPROCESS_URL + ID_NUMBER;
+            var urlReqx = new air.URLRequest(urlString);
 
+            var urlStreamx = new air.URLLoader();
+            try {
+                if(!calledp){
+                    air.trace("call processx: " + urlString);
+                    urlStreamx.load(urlReqx);
+                    calledp = true;
+                }
+            } 
+            catch (error) {
+                calledp = false;
+                alert("Could not call the process script.");
+            }*/
+        }
+		
+	   setTimeout(function(){
+	       
+		   if (quit_app) {
+		   	justQuit();
+		   }
+		   else {
+		   	hideMessage();
+		   }
+	   },2000);
+	
 	});
+}
+function justQuit(){
+    showMessage(appLang[currLang]["msg_session_ending"],
+        function(){
+            setTimeout(function(){
+                hideMessage();
+                $('#main, #login_items').fadeOut('slow', function(){
+                
+                    try{air.NativeApplication.nativeApplication.exit();}
+                    catch(e){}
+                });
+                
+                
+            },2000);
+            
+        
+    
+    });
 }
 function enterHandler(event){
 	$('body').keypress(function(e){
-	    air.trace(e.which);
+	    //air.trace(e.which);
 		if (e.which == 13) {
 		
 			if ($('#signin').is(':visible')) {
@@ -795,6 +810,7 @@ function enterHandler(event){
 	
 }
 function rememberUser(){
+	
 	var username = air.EncryptedLocalStore.getItem('username');
 	var pass = air.EncryptedLocalStore.getItem('password');
 	

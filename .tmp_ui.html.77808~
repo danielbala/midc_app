@@ -18,44 +18,43 @@
     <body onload="doLoad();">
         <div id="wrapper">
             <!-- login_items -->
-            <div id="login_items" style="display:none;">
+            <div id="login_items">
                 <div>
-                    <span class="lbl_lastname inputlbl" for="username">
+                    <label class="inputlbl" for="username">
                         Last Name
-                    </span>
+                    </label>
                     <input id="username" type="text" class="textb" />
                 </div>
                 <div>
-                    <span class="lbl_password inputlbl" for="password">
+                    <label class="inputlbl" for="password">
                         Password
-                    </span>
+                    </label>
                     <input id="password" type="password" class="textb" />
                 </div>
                 <div style="padding-left:82px;">
                     <input id="remember" type="checkbox" />
-                    <span class="lbl_remember" for="remember">
+                    <label for="remember">
                         Remember Me
-                    </span>
+                    </label>
                 </div>
                 <div>
                     <label class="inputlbl">
                         &nbsp;
                     </label>
-                    <input id="signin" type="button" value="Sign In" class="button" />
-					<input id="exit" type="button" value="Exit" class="button" />
+                    <input id="signin" type="button" value="Sign In" class="button" /><input id="exit" type="button" value="Exit" class="button" />
                 </div>
                 <div id="messages" style="width:247px;font-size:12px;padding-top: 6px;">
                     <div id="progress">
                         <img src="icons/loading.gif" alt="loading" width="43" height="11" />
                     </div>
                     <div id="invalid_login" style="position: relative;top: -5px;">
-                        <span class="lbl_invalid_password">Invalid Username and Password!
+                        Invalid Username and Password!
                         <br/>
                         Please Try Again or Click <a id="reminder_link" href="#">here</a>
-                        for a reminder.</span>
+                        for a reminder.
                     </div>
-                    <div class="intro" style="position: relative;top: -5px;">
-                        <span class="lbl_intro">Use to view your treadmill desk results in real time on your computer.</span>
+                    <div class="intro">
+                        Use to view your treadmill desk results in real time on your computer.
                     </div>
                 </div>
                 <div id="footer">
@@ -63,9 +62,9 @@
                 </div>
             </div>
             <!--END #login_items -->
-            <div id="main" style="display:block;">
+            <div id="main">
                 <ul class="sections">
-                    <li class="pull_tab close_inner">
+                    <li class="pull_tab close_all">
                     </li>
                     <li class="inner">
                         <ul class="inner_content">
@@ -101,10 +100,10 @@
                                                     <hr/>
                                                     <p>
                                                         <em>Language</em>
-                                                        <a class="translate" rel="en" href="#en">English</a>
-                                                        <a class="translate" rel="de" href="#de">German</a>
-                                                        <a class="translate" rel="fr" href="#fr">French</a>
-                                                        <a class="translate" rel="es" href="#fr">Spanish</a>
+                                                        <a class="doEnglish" href="#en">English</a>
+                                                        <a class="doGerman" href="#de">German</a>
+                                                        <a class="doFrench" href="#fr">French</a>
+                                                        <a class="doSpanish" href="#fr">Spanish</a>
                                                     </p>
                                                 </div>
                                             </li>
