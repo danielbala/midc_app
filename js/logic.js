@@ -1,28 +1,50 @@
-var LOGIN_URL = 'https://www.interactivehealthpartner.com/idc/login.asp';
-var CONFIG_URL = 'https://www.interactivehealthpartner.com/idc/ihp_config.xml';
-var IHPUSER_URL = 'https://www.interactivehealthpartner.com/idc/ihpuser.asp?id=';
-var APPDATA_URL = 'https://www.interactivehealthpartner.com/idc/midc-data.asp?id=';
-var IHPPROCESS_URL = 'https://www.interactivehealthpartner.com/idc/process.asp?id=';
-var UPLOAD_URL = 'https://www.interactivehealthpartner.com/idc/server_upload.php?dest=';
-var FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin';
+var 
+    LOGIN_URL = 'https://www.interactivehealthpartner.com/idc/login.asp',
+    CONFIG_URL = 'https://www.interactivehealthpartner.com/idc/ihp_config.xml',
+    IHPUSER_URL = 'https://www.interactivehealthpartner.com/idc/ihpuser.asp?id=',
+    LANGUAGE_FILE = 'https://www.interactivehealthpartner.com/idc/midc-lang.json',
+    APPDATA_URL = 'https://www.interactivehealthpartner.com/idc/midc-data.asp?id=',
+    IHPPROCESS_URL = 'https://www.interactivehealthpartner.com/idc/process.asp?id=',
+    UPLOAD_URL = 'https://www.interactivehealthpartner.com/idc/server_upload.php?dest=',
+    FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin',
 
-var ID_NUMBER = null;
+//COUNTERS PUT IN GLOBAL SCOPE SO WE CAN STOP AND START ELSEWHERE
+    stepsCounter = calorieCounter = distanceCounter = timeSecCounter = timeMinCounter = {},
+//current user
+    ID_NUMBER = null,
 
 // FOR TESTING
-var OFFLINE = false;
+    OFFLINE = false,
 
-//lets get it started... 
-var appData = {};
-var appLang = {};
-var currLang = "de"; //default language
+//data object holders 
+    appData = {},
+    appLang = {},
+    currLang = "en", //default language
+
+//native process
+    nativeProcess = new air.NativeProcess(),
+
+//operating system
+    OS = air.Capabilities.os.substr(0, 3).toLowerCase();
 
 //global events
 try{
-    window.nativeWindow.addEventListener(air.Event.CLOSING, doSignOut);
+	//PUT BACK
+    //window.nativeWindow.addEventListener(air.Event.CLOSING, doSignOut);
 }catch(e){}
 
 function doLoad(env){
 	
+	//move inside successful login
+	$("#wrapper").delay(2000).fadeIn("slow", function(){
+	   initCourier();
+	   $('#exit').live("click", function(){
+	        air.NativeApplication.nativeApplication.exit();
+	    });
+
+        return true;
+	});
+    return true;
 	//checkForUpdate();
 	
 	//remember user init
@@ -38,7 +60,6 @@ function doLoad(env){
 		try {
 			currLang = air.Capabilities.language;
 			
-			
 			//if they ever change language it is set in local storage... retrieve it
 			var setLang = air.EncryptedLocalStore.getItem('appLang');
 			if (setLang != null) {
@@ -51,7 +72,7 @@ function doLoad(env){
 		//show main wrapper
 		$("#wrapper").delay(2000).fadeIn("slow");
 		
-	});
+	});//END getAppLanguage
     
 	
 	//prepare all the counters
@@ -69,10 +90,12 @@ function showMessage(msg, callback){
         callback.call();
     }
 }
+
 function hideMessage(){
 	$(".alert_message p").html("");
 	$(".alert_message").css({zIndex: "-1"}).animate({top: "25px"}, "slow");
 }
+
 function assignEventHandlers(env){
 	//click handlers
     $('#signin').click(function(){
@@ -86,7 +109,8 @@ function assignEventHandlers(env){
             populateData(function(){
                 
                 hideLoginItems(function(){
-    				prepareChart("ul.actual_charts .steps");
+    				
+					prepareChart("ul.actual_charts .steps");
     				prepareChart("ul.actual_charts .calories");
     				prepareChart("ul.actual_charts .distance");
     				prepareChart("ul.actual_charts .time");
@@ -102,19 +126,21 @@ function assignEventHandlers(env){
                 	    showMessage("Press 1 to start Time!<br /> Press 2 to start Steps<br /> Press p to Pause<br /> Press r to Resume");
                 	},1000);
 
-    			});
+    			});//END hideLoginItems(function(){
     			
-            });
+            });//END populateData(function(){
             
-        });
+        });//END doSignIn(function(){
         
-    });
+    });//END $('#signin').click(function(){
+    
     $('.close_app').click(function(){
 		doSignOut();
     });
-    $('#exit').click(function(){
+    $('#exit').live("click", function(){
         justQuit();
     });
+	
     //forgot my password link click
     $('#reminder_link').click(function(){
 		var url = FORGOT_PWD_URL;
@@ -183,15 +209,18 @@ function assignEventHandlers(env){
     });
 	$(".doMetric").click(function(){
 		doMetric();
+		$(".settings_menu").removeClass("settings_menu_on");
 		return false;
 	});
 	$(".doImperial").click(function(){
         doImperial();
+		$(".settings_menu").removeClass("settings_menu_on");
 		return false;
     });
 	$(".translate").click(function(){
         currLang = $(this).attr("rel");
 		translateTo($(this).attr("rel"));
+		$(".settings_menu").removeClass("settings_menu_on");
         return false;
     });
 	$(".doSync").live("click", function(){
@@ -211,6 +240,7 @@ function assignEventHandlers(env){
     enterHandler();
 	
 }
+
 function hideLoginItems(callback){
     $("#wrapper").css("background-image","none").css("background-color","transparent");
     
@@ -224,6 +254,7 @@ function hideLoginItems(callback){
         callback();
     }, 1500);
 }
+
 function prepareChart(item){
 	var chartSpecs = getChartSpecs(item);
     var tallestXvalue = chartSpecs.maxValue;
@@ -261,6 +292,7 @@ function prepareChart(item){
 		}
     });
 }
+
 function getChartSpecs(item){
 	var barArr = [];
 	$(item + " .yaxis li").each(function(){
@@ -274,6 +306,7 @@ function getChartSpecs(item){
 		yaxislength: barArr.length
 	};
 }
+
 function positionWidget(env){
 	/*setTimeout(function(){
 	    showMessage("Hello, you can close me if you want to!");
@@ -298,8 +331,90 @@ function positionWidget(env){
 		
     }
 }
-//PUT IN GLOBAL SCOPE SO WE CAN STOP AND START ELSEWHERE
-var stepsCounter = calorieCounter = distanceCounter = timeSecCounter = timeMinCounter = {};
+
+//JAVA, BLUETOOTH, AND SOCKET ACTION!
+function initCourier(){
+    
+	var path_to_java = "";
+	if (OS === "mac") {
+	   path_to_java = "/usr/bin/java";
+	}
+	else {
+		//c:\> for %i in (java.exe) do @echo.   %~$PATH:i
+	   path_to_java = "c:\windows\system32\java";
+	}
+	
+	var java_file = new air.File(path_to_java); //PATH TO JAVA
+    air.trace("java path", java_file.nativePath);
+	
+	if(air.NativeProcess.isSupported)
+    {
+        air.trace("native process supported");
+        //handlers for BLUETOOTH
+        var np_file = air.File.applicationDirectory.resolvePath("bin/Courier.jar");
+        
+        var processArgs = new air.Vector["<String>"]();
+        processArgs.push("-jar");
+        //processArgs.push("-d32");
+        processArgs.push(np_file.nativePath);
+        
+        var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+        nativeProcessStartupInfo.executable = java_file;
+        nativeProcessStartupInfo.arguments = processArgs;
+        
+        nativeProcess.start(nativeProcessStartupInfo); 
+        nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
+        nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
+        nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
+        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
+        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
+        
+        if (nativeProcess.running) {
+            air.trace("process running");
+            nativeProcess.standardInput.writeMultiByte("searchDevices\n", "utf-8");
+			$("#wrapper").html("<ul></ul>");
+			$("#wrapper").css({color:"#000",backgroundColor:"#fff", width:"300px", height:"300px", overflowY:"scroll"});
+        }
+        else {
+            air.trace("process not running");
+        }
+        
+    }
+    else
+    {
+        alert("NAAY NO NATIVE PROCESS");
+    }
+	
+}
+//bluetooth event handlers
+function onOutputData()
+{
+	var msg = nativeProcess.standardOutput.readUTFBytes(nativeProcess.standardOutput.bytesAvailable);
+    air.trace("message: ", msg);
+	$("#wrapper ul").append("<li style='color:green'>msg: "+ msg+"</li>"); 
+}
+
+function onErrorData(event)
+{
+	var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable)
+    air.trace("ERROR -", err);
+	$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
+}
+
+function onExit(event)
+{
+    air.trace("Process exited with ", event.exitCode);
+	$("#wrapper ul").append('<input id="exit" type="button" value="Exit" class="button" />');
+	
+}
+
+function onIOError(event)
+{
+     air.trace(event.toString());
+}
+//END bluetooth event handlers
+
+
 function initCounters(){
 	// Initialize Steps counter
     stepsCounter = new flipCounter('stepsflip-counter', {value:0, inc:2, pace:1000, auto:false, precision:5});
@@ -609,7 +724,11 @@ function getAppLanguage(callback){
 	    },
 	    "fr": {}
 	};
-	callback.call();
+	
+	//getDataFrom(LANGUAGE_FILE, "", function(response){
+	//   appLang = JSON.parse(response);
+	   callback.call();
+	//});
 }
 
 function checkForUpdate(){
@@ -839,15 +958,17 @@ function removeUser(){
 }
 function getDataFrom(url, data, callback){
     
+	air.trace(url);
+    air.trace(data);
+		
 	request = new air.URLRequest(url);
 	request.method = air.URLRequestMethod.POST;
 
-	request.data = data
+	request.data = data;
 	loader = new air.URLLoader();
 	loader.addEventListener(air.Event.COMPLETE, function(event){
 		
-		air.trace(url);
-        air.trace(data);
+		
         air.trace("func: ",event.target.data);
         	
     	//MOVE ON
