@@ -36,7 +36,7 @@ try{
 function doLoad(env){
 	
 	//move inside successful login
-	$("#wrapper").delay(2000).fadeIn("slow", function(){
+	$("#wrapper").fadeIn("slow", function(){
 	   initCourier();
 	   $('#exit').live("click", function(){
 	        air.NativeApplication.nativeApplication.exit();
