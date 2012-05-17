@@ -341,17 +341,19 @@ function initCourier(){
 	}
 	else {
 		//c:\> for %i in (java.exe) do @echo.   %~$PATH:i
-	   path_to_java = "c:\windows\system32\java";
+	   path_to_java = "c:\\windows\\system32\\java.exe";
 	}
 	
 	var java_file = new air.File(path_to_java); //PATH TO JAVA
     air.trace("java path", java_file.nativePath);
 	
+	//alert(OS+" :: "+path_to_java+" :: "+"java path :: "+ java_file.nativePath);
+	
 	if(air.NativeProcess.isSupported)
     {
         air.trace("native process supported");
         //handlers for BLUETOOTH
-        var np_file = air.File.applicationDirectory.resolvePath("bin/Courier.jar");
+        var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
         
         var processArgs = new air.Vector["<String>"]();
         processArgs.push("-jar");
@@ -373,7 +375,7 @@ function initCourier(){
             air.trace("process running");
             nativeProcess.standardInput.writeMultiByte("searchDevices\n", "utf-8");
 			$("#wrapper").html("<ul></ul>");
-			$("#wrapper").css({color:"#000",backgroundColor:"#fff", width:"300px", height:"300px", overflowY:"scroll"});
+			$("#wrapper").css({color:"#000",backgroundColor:"#fff", width:"300px", height:"300px", overflowY:"auto"});
         }
         else {
             air.trace("process not running");

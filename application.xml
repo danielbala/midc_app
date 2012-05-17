@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <application 
-	xmlns="http://ns.adobe.com/air/application/3.1"
+	xmlns="http://ns.adobe.com/air/application/3.2"
 	minimumPatchLevel="0">
 <!-- Adobe AIR Application Descriptor File Template.
 
