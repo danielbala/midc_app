@@ -211,9 +211,18 @@ ul{
 			  float: left;
 		   }
 			   #main ul.sections li.inner div.details ul.detail_options li.bluetooth_status b{
-			   	  background: transparent url('images/bluetooth_on.png') no-repeat 0px 0px;
+			   	  background: transparent url('images/bluetooth_off.png') no-repeat 0px 0px;
 			   	
 			   }
+			   #main ul.sections li.inner div.details ul.detail_options li.bluetooth_status b.on{
+                    background: transparent url('images/bluetooth_on.png') no-repeat 0px 0px;
+					position: absolute;
+					left: 0px;
+					top: 0px;
+					display: none;
+					/*top: -10px;*/
+                
+               }
 			   #main ul.sections li.inner div.details ul.detail_options li.account_sync b{
 			   	  background: transparent url('images/sync.png') no-repeat 0px 0px;
 	            

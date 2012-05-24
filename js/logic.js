@@ -23,6 +23,23 @@ var
 
 //native process
     nativeProcess = new air.NativeProcess(),
+	
+//courier communication object
+    courierData = {
+	    "address": "123A12345AOQ",
+	    "uom": 0,
+	    "steps": 0,
+	    "calories": 0,
+	    "distance": {
+	        "whole": 0,
+	        "fraction": 0
+	    },
+	    "time": {
+	        "hour": 0,
+	        "minute": 0,
+	        "seconds": 0
+	    }
+	},
 
 //operating system
     OS = air.Capabilities.os.substr(0, 3).toLowerCase();
@@ -30,22 +47,12 @@ var
 //global events
 try{
 	//PUT BACK
-    //window.nativeWindow.addEventListener(air.Event.CLOSING, doSignOut);
+    window.nativeWindow.addEventListener(air.Event.CLOSING, doSignOut);
 }catch(e){}
 
 function doLoad(env){
 	
-	//move inside successful login
-	$("#wrapper").fadeIn("slow", function(){
-	   initCourier();
-	   $('#exit').live("click", function(){
-	        air.NativeApplication.nativeApplication.exit();
-	    });
-
-        return true;
-	});
-    return true;
-	//checkForUpdate();
+	//checkForUpdate(); //PUT BACK
 	
 	//remember user init
     
@@ -61,9 +68,9 @@ function doLoad(env){
 			currLang = air.Capabilities.language;
 			
 			//if they ever change language it is set in local storage... retrieve it
-			var setLang = air.EncryptedLocalStore.getItem('appLang');
-			if (setLang != null) {
-				currLang = setLang.readUTFBytes(setLang.bytesAvailable);
+			var setLang = get_from_localStorage('appLang');
+			if (setLang) {
+				currLang = setLang;
 			}
 		}catch (e) {}
 		
@@ -90,10 +97,48 @@ function showMessage(msg, callback){
         callback.call();
     }
 }
-
 function hideMessage(){
-	$(".alert_message p").html("");
-	$(".alert_message").css({zIndex: "-1"}).animate({top: "25px"}, "slow");
+    $(".alert_message p").html("");
+    $(".alert_message").css({zIndex: "-1"}).animate({top: "25px"}, "slow");
+}
+
+var btinterval = 0;
+function showBTLoading(){
+	
+	btinterval = setInterval(
+	   function(){
+	   	$("b.on").stop().fadeIn(500, function(){
+	   		
+			setTimeout(function(){
+	   			$("b.on").stop().fadeOut(500);
+				//set the text to connecting...
+				$(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
+	   		}, 700);
+	   	});
+	   }, 1800);
+}
+function clearBTLoading(connected){
+    clearInterval(btinterval);
+	
+	if (typeof connected == "undefined") {
+	   if (nativeProcess.running) {
+	       connected = true;
+	   }
+	   else {
+	       connected = false;
+	   }
+	}
+	
+	if (connected) {
+		$("b.on").fadeIn("fast");
+		//set the text to connected
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
+	}
+	else {
+	   $("b.on").fadeOut("fast");
+	   //set the text to OFF
+	   $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+	}
 }
 
 function assignEventHandlers(env){
@@ -115,16 +160,20 @@ function assignEventHandlers(env){
     				prepareChart("ul.actual_charts .distance");
     				prepareChart("ul.actual_charts .time");
 
-    				//translateTo(currLang);
-
+                    //open the settings menu so you can see the action going on
+                    $(".tab_link").click();
+					//START BLUETOOTH LISTENER
+					//initCourier();
+					
+					
     				//position, set defaults and sticky
     	            positionWidget(env);
 
                     $('#main').fadeIn('slow');
                     
-                    setTimeout(function(){
-                	    showMessage("Press 1 to start Time!<br /> Press 2 to start Steps<br /> Press p to Pause<br /> Press r to Resume");
-                	},1000);
+                    //setTimeout(function(){
+                	//    showMessage("Press 1 to start Time!<br /> Press 2 to start Steps<br /> Press p to Pause<br /> Press r to Resume");
+                	//},1000);
 
     			});//END hideLoginItems(function(){
     			
@@ -140,6 +189,18 @@ function assignEventHandlers(env){
     $('#exit').live("click", function(){
         justQuit();
     });
+	
+	$('.connectAgain').live("click", function(){
+		hideMessage();
+        initCourier();
+    });
+	$(".doBluetooth").click(function(){
+		if (!nativeProcess.running) {
+           showMessage(appLang[currLang]["msg_treadmill_connect"]+ " <input class='connectAgain button' type='button' value='"+appLang[currLang]["btn_yes"]+"'/><input class='close_message_bt button' type='button' value='"+appLang[currLang]["btn_no"]+"' />");
+       }
+		
+		
+	});
 	
     //forgot my password link click
     $('#reminder_link').click(function(){
@@ -182,14 +243,14 @@ function assignEventHandlers(env){
         return false;
     });
     
-    $(".close_message").click(function(){
+    $(".close_message, .close_message_bt").live("click",function(){
         hideMessage();
         return false;
     });
     $(".toggle_settings").click(function(){
         $(".settings_menu").toggleClass("settings_menu_on");
     });
-    $(".do_sync").click(function(){
+    $(".do_sync").live("function", function(){
         doSync(false);// quit app = false
         return false;
     });
@@ -202,9 +263,7 @@ function assignEventHandlers(env){
 		
 		//STORE LAST SELECTED CHART IN LOCAL STORAGE
 		try{
-		    var data = new air.ByteArray();
-	        data.writeUTFBytes(this_class);
-	        air.EncryptedLocalStore.setItem('selectedChart', data);
+	        add_to_localStorage('selectedChart', this_class);
 		}catch(e){}
     });
 	$(".doMetric").click(function(){
@@ -235,24 +294,90 @@ function assignEventHandlers(env){
     $('#remember').click(function(){
         doRemember();
     });
-	//ENTER key
-	//enter should submit
-    enterHandler();
+	
+    keypressHandler();
 	
 }
-
+function keypressHandler(event){
+    $('body').keypress(function(e){
+        //air.trace(e.which);
+		//ENTER key
+        //enter should submit
+        if (e.which == 13) {
+            $('#signin').click();
+			
+            /*if ($('#signin').is(':visible')) {
+                if(OFFLINE){
+                    ID_NUMBER = "138";
+                    $('#login_items').fadeOut('fast');
+                    $('#main').delay(1000).fadeIn('slow');
+                    $('#invalid_login').fadeOut('fast');
+                    //get config; - possible fail - this will populate: CONFIG_FILES_ARRAY
+                    //getConfig("file:///Library/WebServer/Documents/bbd/sample_files/ihp_config_new.xml");
+                    //attempt to auto upload
+                    //setTimeout(auto_upload,1000);
+                }else{
+                    
+                }
+            }
+            
+            e.preventDefault();
+            return false;*/
+        }
+		
+        if (e.which == 49) { //#1
+            
+			courierData.steps++;
+			courierData.calories++;
+			courierData.distance.whole++;
+			courierData.distance.fraction +=2;
+			courierData.time.seconds += 10;
+			courierData.time.minute++;
+            
+			mock_onOutputData(JSON.stringify(courierData));
+            
+        }
+        /*if (e.which == 50) { //#2
+            if ($('#signin').is(':visible')) {
+                
+            }else{
+                stepsCounter.setAuto(true).setValue(0);
+            }
+        }
+        if (e.which == 112) { //p
+            if ($('#signin').is(':visible')) {
+                
+            }else{
+                stepsCounter.setAuto(false);
+                timeSecCounter.setAuto(false);
+                timeMinCounter.setAuto(false);
+            }
+        }
+        if (e.which == 114) { //r
+            if ($('#signin').is(':visible')) {
+                
+            }else{
+                stepsCounter.setAuto(true);
+                timeSecCounter.setAuto(true);
+                timeMinCounter.setAuto(true);
+            }
+        }*/
+        
+    });
+    
+}
 function hideLoginItems(callback){
     $("#wrapper").css("background-image","none").css("background-color","transparent");
     
-    $("#login_items div").fadeOut("fast", function(){
-        $("#login_items").fadeOut("1200", function(){
+    $("#login_items div").fadeOut(1000, function(){
+        $("#login_items").fadeOut(700, function(){
 
         }); 
     });
     
     setTimeout(function(){
         callback();
-    }, 1500);
+    }, 1200);
 }
 
 function prepareChart(item){
@@ -260,7 +385,7 @@ function prepareChart(item){
     var tallestXvalue = chartSpecs.maxValue;
     var yaxiscount = chartSpecs.yaxislength;
 
-    var maxBarHeight = 28 * yaxiscount; // 28 comes from: #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis li
+    var maxBarHeight = 28 * yaxiscount; // 28 comes from CSS: #main ul.sections li.inner li.chart ul.actual_charts li ul.yaxis li
     var css_ratio = maxBarHeight / tallestXvalue;
     
     $(item + " .bars").css("height", maxBarHeight);
@@ -316,11 +441,11 @@ function positionWidget(env){
         window.nativeWindow.x = (air.Capabilities.screenResolutionX - 675);
         window.nativeWindow.y = (air.Capabilities.screenResolutionY - 475) / 2;
         
-	    var selectedChart = air.EncryptedLocalStore.getItem('selectedChart');
+	    var selectedChart = get_from_localStorage('selectedChart');
 	    
-		if (selectedChart != null) {
+		if (selectedChart) {
             //SET LAST SELECTED CHART
-			var currChart = selectedChart.readUTFBytes(selectedChart.bytesAvailable);
+			var currChart = selectedChart;
 			$(".chart_menu li, .actual_charts li").removeClass("selected");
 			
 			$(".chart_menu li."+currChart).addClass("selected");
@@ -335,6 +460,12 @@ function positionWidget(env){
 //JAVA, BLUETOOTH, AND SOCKET ACTION!
 function initCourier(){
     
+	if (nativeProcess.running) {
+	   //already connected, do nothing
+	   return;
+	}   
+	showBTLoading();
+	
 	var path_to_java = "";
 	if (OS === "mac") {
 	   path_to_java = "/usr/bin/java";
@@ -352,12 +483,19 @@ function initCourier(){
 	if(air.NativeProcess.isSupported)
     {
         air.trace("native process supported");
-        //handlers for BLUETOOTH
+
         var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
         
+		var known_address = get_from_localStorage("known_address");
+		var user_weight = appData.Weight ? appData.Weight : "null";
+		
         var processArgs = new air.Vector["<String>"]();
         processArgs.push("-jar");
-        //processArgs.push("-d32");
+        processArgs.push("-d32"); //FORCE 32bit mode
+		
+		//processArgs.push(String(known_address)); //known address from local storage
+		//processArgs.push(user_weight); //known user weight
+		
         processArgs.push(np_file.nativePath);
         
         var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
@@ -371,42 +509,85 @@ function initCourier(){
         nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
         nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
         
-        if (nativeProcess.running) {
-            air.trace("process running");
-            nativeProcess.standardInput.writeMultiByte("searchDevices\n", "utf-8");
-			$("#wrapper").html("<ul></ul>");
-			$("#wrapper").css({color:"#000",backgroundColor:"#fff", width:"300px", height:"300px", overflowY:"auto"});
-        }
-        else {
-            air.trace("process not running");
-        }
+        sendCourierMessage("searchDevices\n");
         
     }
     else
     {
-        alert("NAAY NO NATIVE PROCESS");
+		clearBTLoading(false);
+        alert("Your system does not support Bluetooth communication --- CODE:NO-NP001");
     }
 	
 }
+//@param string message
+function sendCourierMessage(message){
+    
+	if (nativeProcess.running) {
+		
+		air.trace("process running send message: "+ message);
+		nativeProcess.standardInput.writeMultiByte(message, "utf-8");
+		
+	}
+	else {
+        clearBTLoading(false);
+		air.trace("process not running:"+ message);
+	}
+}
+
+function mock_onOutputData(msg){
+    
+	try {
+		msgData = JSON.parse(msg);
+		$.extend(courierData, msgData);
+		air.trace(msg);
+		initCounters();
+	} 
+	catch (e) {
+		air.trace("catch parse error:", e.message);
+	}
+}
+
 //bluetooth event handlers
 function onOutputData()
 {
 	var msg = nativeProcess.standardOutput.readUTFBytes(nativeProcess.standardOutput.bytesAvailable);
-    air.trace("message: ", msg);
-	$("#wrapper ul").append("<li style='color:green'>msg: "+ msg+"</li>"); 
+    air.trace("courier message: ", msg);
+	
+	if (msg.indexOf("INQUIRY_COMPLETED") !== -1) {
+        
+		air.trace("GOT CONNECT FROM COURIER");
+		clearBTLoading(true);
+		
+		showMessage(appLang[currLang]["msg_treadmill_connected"], function(){
+            setTimeout(hideMessage,3000);
+        });
+	}
+	else if (msg.indexOf("address")) {
+	   
+	   try {
+	   	msgData = JSON.parse(msg);
+	   	$.extend(courierData, msgData);
+	   	air.trace(courierData);
+	   } 
+	   catch (e) {
+	       air.trace("catch parse error:", e.message);
+	   }
+	}
+	//$("#wrapper ul").append("<li style='color:green'>msg: "+ msg+"</li>"); 
 }
 
 function onErrorData(event)
 {
 	var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable)
     air.trace("ERROR -", err);
-	$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
+	//$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
 }
 
 function onExit(event)
 {
     air.trace("Process exited with ", event.exitCode);
-	$("#wrapper ul").append('<input id="exit" type="button" value="Exit" class="button" />');
+	clearBTLoading(false);
+	//$("#wrapper ul").append('<input id="exit" type="button" value="Exit" class="button" />');
 	
 }
 
@@ -419,15 +600,15 @@ function onIOError(event)
 
 function initCounters(){
 	// Initialize Steps counter
-    stepsCounter = new flipCounter('stepsflip-counter', {value:0, inc:2, pace:1000, auto:false, precision:5});
+    stepsCounter = new flipCounter('stepsflip-counter', {value:courierData.steps, inc:2, pace:1000, auto:false, precision:5});
     // Initialize Calorie counter
-    calorieCounter = new flipCounter('caloriesflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:4});
+    calorieCounter = new flipCounter('caloriesflip-counter', {value:courierData.calories, inc:1, pace:1000, auto:false, precision:4});
     // Initialize Distance counter
-    distanceCounter = new flipCounter('distanceflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:4});
+    distanceCounter = new flipCounter('distanceflip-counter', {value:courierData.distance.whole, inc:1, pace:1000, auto:false, precision:4});
     // Initialize Time Seconds counter
-    timeSecCounter = new flipCounter('timeSecflip-counter', {value:0, inc:1, pace:1000, auto:false, precision:2, maxCount:60});
+    timeSecCounter = new flipCounter('timeSecflip-counter', {value:courierData.time.seconds, inc:1, pace:1000, auto:false, precision:2, maxCount:60});
     // Initialize Time Minute counter
-    timeMinCounter = new flipCounter('timeMinflip-counter', {value:0, inc:1, pace:62000, auto:false, precision:2});
+    timeMinCounter = new flipCounter('timeMinflip-counter', {value:courierData.time.minute, inc:1, pace:62000, auto:false, precision:2});
 }
 
 function populateData(callback){
@@ -523,7 +704,10 @@ function populateData(callback){
 		$(".Time_Total").html(appData.Time_Total);
 		$(".Time_Daily_Average").html(appData.Time_Daily_Average);
 		
-		
+		//if all the totals are 0
+		if(appData.Steps_Total == 0 && appData.Calories_Total == 0, appData.Distance_Total == 0 && appData.Time_Total == 0){
+		  showMessage(appLang[currLang]["msg_no_treadmill_7days"]);
+		}
         
 		//TRANSLATE DAY OF THE WEEK ABBREVIATIONS
 	    if (typeof appData.Xaxis_1 != "undefined") {
@@ -538,6 +722,8 @@ function populateData(callback){
         callback();
         return false;
     });
+	
+	showMessage(appLang[currLang]["msg_no_treadmill_yet"]);
     return false;
 }
 
@@ -611,9 +797,11 @@ function translateTo(lang){
 		$(".Xaxis_7").html(appLang[lang]["lbl_" + appData.Xaxis_7.toLowerCase()]);
 	}
 	
-	$("#signin").val(appLang[currLang]["btn_signin"]);
-	$("#exit").val(appLang[currLang]["btn_exit"]);
+	$("#signin").val(appLang[lang]["btn_signin"]);
+	$("#exit").val(appLang[lang]["btn_exit"]);
 	
+	//translate the bluetooth status as well.
+	clearBTLoading();
 	
 	//german text is too long
 	/*if(lang == "de"){
@@ -624,9 +812,7 @@ function translateTo(lang){
 	
 	//STORE LAST SELECTED LANGUAGE
 	try{
-	    data = new air.ByteArray();
-        data.writeUTFBytes(lang);
-        air.EncryptedLocalStore.setItem('appLang', data);
+	    add_to_localStorage('appLang',lang);
     }catch(e){}
 	
 	
@@ -663,11 +849,13 @@ function getAppLanguage(callback){
 			"btn_just_quit": "Just Quit",
 			"btn_signin":"Sign In",
 			"btn_exit": "Exit",
+			"btn_yes": "Yes",
+			"btn_no": "No",
 	        "lbl_7daytotal": "7-Day Total",
 	        "lbl_daily_average": "Daily Average",
 	        "lbl_last7days": "Last 7 Days",
 	        "lbl_bt_off": "OFF",
-	        "lbl_bt_search": "Searching…",
+	        "lbl_bt_search": "Searching...",
 	        "lbl_bt_connected": "Connected",
 	        "lbl_treadmill_desk": "Treadmill Desk",
 	        "msg_no_treadmill_yet": "There is no treadmill desk data to display yet.",
@@ -708,6 +896,8 @@ function getAppLanguage(callback){
 			"btn_just_quit": "Einfach Aufh&ouml;ren",
 			"btn_signin":"Login",
             "btn_exit": "Verlassen",
+            "btn_yes": "Ja",
+            "btn_no": "Nein",
 	        "lbl_7daytotal": "Gesamt 7 Tage",
 	        "lbl_daily_average": "Durchschnitt t&auml;glich",
 	        "lbl_last7days": "die letzten 7 Tage",
@@ -766,13 +956,8 @@ function doSignIn(callback){
 		
 			if (document.getElementById('remember').checked) {
 				
-				data = new air.ByteArray();
-				data.writeUTFBytes(username);
-				air.EncryptedLocalStore.setItem('username', data);
-				
-				data = new air.ByteArray();
-				data.writeUTFBytes(password);
-				air.EncryptedLocalStore.setItem('password', data);
+				add_to_localStorage('username',username);
+				add_to_localStorage('password',password);
 				
 			}
 			else {
@@ -866,78 +1051,15 @@ function justQuit(){
     
     });
 }
-function enterHandler(event){
-	$('body').keypress(function(e){
-	    //air.trace(e.which);
-		if (e.which == 13) {
-		
-			if ($('#signin').is(':visible')) {
-				if(OFFLINE){
-					ID_NUMBER = "138";
-					$('#login_items').fadeOut('fast');
-					$('#main').delay(1000).fadeIn('slow');
-					$('#invalid_login').fadeOut('fast');
-					//get config; - possible fail - this will populate: CONFIG_FILES_ARRAY
-					//getConfig("file:///Library/WebServer/Documents/bbd/sample_files/ihp_config_new.xml");
-					//attempt to auto upload
-					//setTimeout(auto_upload,1000);
-				}else{
-					$('#signin').click();
-				}
-			}
-			
-			e.preventDefault();
-			return false;
-		}
-		if (e.which == 49) {
-		    if ($('#signin').is(':visible')) {
-		        
-		    }else{
-		        timeSecCounter.setAuto(true).setValue(0);
-		        timeMinCounter.setAuto(true).setValue(0);
-		    }
-		    //e.preventDefault();
-			//return false;
-		}
-		if (e.which == 50) {
-		    if ($('#signin').is(':visible')) {
-		        
-		    }else{
-		        stepsCounter.setAuto(true).setValue(0);
-		    }
-		    //e.preventDefault();
-			//return false;
-		}
-		if (e.which == 112) {
-		    if ($('#signin').is(':visible')) {
-		        
-		    }else{
-		        stepsCounter.setAuto(false);
-		        timeSecCounter.setAuto(false);
-		        timeMinCounter.setAuto(false);
-		    }
-		}
-		if (e.which == 114) {
-		    if ($('#signin').is(':visible')) {
-		        
-		    }else{
-		        stepsCounter.setAuto(true);
-		        timeSecCounter.setAuto(true);
-		        timeMinCounter.setAuto(true);
-		    }
-		}
-		
-	});
-	
-}
+
 function rememberUser(){
 	
-	var username = air.EncryptedLocalStore.getItem('username');
-	var pass = air.EncryptedLocalStore.getItem('password');
+	var username = get_from_localStorage('username');
+	var pass = get_from_localStorage('password');
 	
-	if (username != null) {
-		document.getElementById('username').value = username.readUTFBytes(username.bytesAvailable);
-		document.getElementById('password').value = pass.readUTFBytes(pass.bytesAvailable);
+	if (username) {
+		document.getElementById('username').value = username
+		document.getElementById('password').value = pass;
 		document.getElementById('remember').checked = true;
 	}
 	else {
@@ -947,21 +1069,21 @@ function rememberUser(){
 	}
 }
 function doRemember(){
-	var username = air.EncryptedLocalStore.getItem('username');
-	var pass = air.EncryptedLocalStore.getItem('password');
+	var username = get_from_localStorage('username');
+    var pass = get_from_localStorage('password');
 	
-	if (username != null) {
+	if (username) {
 		removeUser();
 	}
 }
 function removeUser(){
-	air.EncryptedLocalStore.removeItem('username');
-	air.EncryptedLocalStore.removeItem('password');
+	delete_from_localStorage('username');
+	delete_from_localStorage('password');
 }
 function getDataFrom(url, data, callback){
-    
-	air.trace(url);
-    air.trace(data);
+    air.trace("getdatafromurl: "+ url + " -data: "+data);
+	//air.trace(url);
+    //air.trace(data);
 		
 	request = new air.URLRequest(url);
 	request.method = air.URLRequestMethod.POST;
@@ -971,7 +1093,7 @@ function getDataFrom(url, data, callback){
 	loader.addEventListener(air.Event.COMPLETE, function(event){
 		
 		
-        air.trace("func: ",event.target.data);
+        air.trace("loader.addEventListener: ",event.target.data);
         	
     	//MOVE ON
 		callback(event.target.data);
@@ -989,6 +1111,41 @@ function getDataFrom(url, data, callback){
     
     return false;
     
+}
+
+
+//ADD TO LOCAL STORAGE
+//@param keyname
+//@param string value
+function add_to_localStorage(keyname, value){
+	air.trace("add_to_localStorage: "+ keyname + "=" + value);
+    
+	var data = new air.ByteArray();
+    data.writeUTFBytes(value);
+    air.EncryptedLocalStore.setItem(keyname, data);
+}
+
+//get from local storage
+//@param keyname
+//@return string value
+function get_from_localStorage(keyname){
+    
+	var return_val = null;
+	var value = air.EncryptedLocalStore.getItem(keyname);
+	
+	if (value !== null) {
+		return_val = value.readUTFBytes(value.bytesAvailable);
+	}
+	air.trace("get_from_localStorage: "+ keyname + "=" + return_val);
+    
+	return return_val;
+}
+//delete from local storage
+//@param key name
+function delete_from_localStorage(keyname){
+	air.trace("delete_from_localStorage: "+ keyname);
+	
+	air.EncryptedLocalStore.removeItem(keyname);
 }
 //UTIL
 Array.max = function( array ){
