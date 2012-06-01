@@ -1,0 +1,35 @@
+<html>
+	<head>
+		<title>MIDC</title>
+		<link href="style.css" rel="stylesheet" type="text/css"/>
+		<script type="text/javascript" src="lib/air/jquery.js"></script>
+		<script type="text/javascript" src="lib/air/jquery-ui.js">
+        </script>
+		
+		<script type="text/javascript" src="http://busterjs.org/releases/latest/buster-test.js"></script>
+		<link href="http://busterjs.org/releases/latest/buster-test.css" rel="stylesheet" type="text/css"/>
+        
+		
+		
+		<script type="text/javascript" src="lib/air/AIRAliases.js"></script>
+		<script type="text/javascript" src="lib/air/AIRIntrospector.js"></script>
+		<script type="application/x-shockwave-flash" src="lib/air/applicationUpdater.swf"/>
+		<script type="application/x-shockwave-flash" src="lib/air/applicationupdater_ui.swf"/>
+		<script type="application/x-shockwave-flash" src="lib/air/aircore.swf"/>
+		
+		<script type="text/javascript" src="lib/air/logic.js"></script>
+		
+		<!--
+          TESTS
+          TEST LOCALLY
+          http://localhost/bbd/midc_app/-->
+		  
+		<script type="text/javascript" src="lib/tests/ui-test.js"></script>
+		
+		
+	</head>
+	<body>
+		
+		
+	</body>
+</html>

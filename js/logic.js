@@ -9,7 +9,7 @@ var
     FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin',
 
 //COUNTERS PUT IN GLOBAL SCOPE SO WE CAN STOP AND START ELSEWHERE
-    stepsCounter = calorieCounter = distanceCounter = timeSecCounter = timeMinCounter = {},
+    stepsCounter = calorieCounter = distanceCounter = distanceTenthsCounter = timeSecCounter = timeMinCounter = {},
 //current user
     ID_NUMBER = null,
 
@@ -19,17 +19,26 @@ var
 //data object holders 
     appData = {},
     appLang = {},
-    currLang = "en", //default language
+    currLang = "en", //default language,
+    workoutData = {}, //will be sent to server to be processed
+
+    processDataInterval = 0,
 
 //native process
     nativeProcess = new air.NativeProcess(),
 	
 //courier communication object
     courierData = {
-	    "address": "123A12345AOQ",
+	    "address": "",
+		"devicetype": "T",
+		"flag": "",
 	    "uom": 0,
 	    "steps": 0,
 	    "calories": 0,
+		"speed": {
+            "whole": 0,
+            "fraction": 0
+        },
 	    "distance": {
 	        "whole": 0,
 	        "fraction": 0
@@ -37,13 +46,29 @@ var
 	    "time": {
 	        "hour": 0,
 	        "minute": 0,
-	        "seconds": 0
+	        "second": 0
 	    }
 	},
-
+    BTCONNECTED = false,
 //operating system
     OS = air.Capabilities.os.substr(0, 3).toLowerCase();
-
+    today_date = getDateTimeStamp();
+	
+var workout_row = {
+    "patientid" : ID_NUMBER,
+    "datestamp" : today_date,
+    "timestamp" : "start",
+    "equip" : courierData.devicetype,
+    "hr" : courierData.time.hour,
+    "cal" : courierData.calories,
+    "steps" : courierData.steps,
+    "speed" : courierData.speed.whole +"."+ courierData.speed.fraction,
+    "dist" : courierData.distance.whole +"."+ courierData.distance.fraction,
+    "watt" : "",
+    "flag" : courierData.flag,
+    "displayunits" : "",
+    "extrafield": ""
+};
 //global events
 try{
 	//PUT BACK
@@ -89,12 +114,20 @@ function doLoad(env){
 }
 //HELPER FUNCTIONS
 function showMessage(msg, callback){
+	
 	$(".alert_message p").html(msg);
 	$(".alert_message").animate({top: "-86px"}, "slow", function(){		
         $(".alert_message").css({zIndex: "2"});
     });
-    if(callback){
-        callback.call();
+	
+    if(typeof callback == "function"){
+        
+		callback.call();
+		
+    }else if(typeof callback == "number") {
+       
+	   setTimeout(hideMessage, callback);
+    
     }
 }
 function hideMessage(){
@@ -103,41 +136,41 @@ function hideMessage(){
 }
 
 var btinterval = 0;
+var bttimeout = 0;
 function showBTLoading(){
-	
+	//set the text to connecting...
+    $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
 	btinterval = setInterval(
 	   function(){
-	   	$("b.on").stop().fadeIn(500, function(){
+	   	$("b.on").fadeIn(500, function(){
 	   		
-			setTimeout(function(){
-	   			$("b.on").stop().fadeOut(500);
-				//set the text to connecting...
-				$(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
+			bttimeout = setTimeout(function(){
+	   			$("b.on").fadeOut(500, function(){
+				    //set the text to connecting...
+                    $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
+				});
+				
 	   		}, 700);
 	   	});
 	   }, 1800);
 }
 function clearBTLoading(connected){
-    clearInterval(btinterval);
+    
+	clearInterval(btinterval);
+    clearTimeout(bttimeout);
 	
-	if (typeof connected == "undefined") {
-	   if (nativeProcess.running) {
-	       connected = true;
-	   }
-	   else {
-	       connected = false;
-	   }
-	}
 	
 	if (connected) {
+		
 		$("b.on").fadeIn("fast");
 		//set the text to connected
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
 	}
 	else {
-	   $("b.on").fadeOut("fast");
-	   //set the text to OFF
-	   $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+		BTCONNECTED = false;
+		$("b.on").fadeOut("fast");
+		//set the text to OFF
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	}
 }
 
@@ -162,8 +195,9 @@ function assignEventHandlers(env){
 
                     //open the settings menu so you can see the action going on
                     $(".tab_link").click();
+					
 					//START BLUETOOTH LISTENER
-					//initCourier();
+					initCourier();
 					
 					
     				//position, set defaults and sticky
@@ -250,10 +284,7 @@ function assignEventHandlers(env){
     $(".toggle_settings").click(function(){
         $(".settings_menu").toggleClass("settings_menu_on");
     });
-    $(".do_sync").live("function", function(){
-        doSync(false);// quit app = false
-        return false;
-    });
+    
     $(".chart_menu li").click(function(){
 		$(".settings_menu").removeClass("settings_menu_on");
         $(".chart_menu li, .actual_charts li").removeClass("selected");
@@ -282,7 +313,11 @@ function assignEventHandlers(env){
 		$(".settings_menu").removeClass("settings_menu_on");
         return false;
     });
-	$(".doSync").live("click", function(){
+	$(".do_sync").live("click", function(){
+        doSync(false);// quit app = false
+        return false;
+    });
+	$(".doPromptSync").live("click", function(){
 	   doSync(true);//quit app = true
 	   return false;
 	});
@@ -326,25 +361,27 @@ function keypressHandler(event){
         }
 		
         if (e.which == 49) { //#1
-            
+            //air.trace("ONE");
+			
 			courierData.steps++;
 			courierData.calories++;
 			courierData.distance.whole++;
 			courierData.distance.fraction +=2;
-			courierData.time.seconds += 10;
+			courierData.time.second += 10;
 			courierData.time.minute++;
+			//courierData.time.hour++;
             
 			mock_onOutputData(JSON.stringify(courierData));
             
         }
-        /*if (e.which == 50) { //#2
-            if ($('#signin').is(':visible')) {
-                
-            }else{
-                stepsCounter.setAuto(true).setValue(0);
-            }
+        if (e.which == 50) { //#2
+            //set stop flah
+			courierData.flag = "S";
+         
+            mock_onOutputData(JSON.stringify(courierData));
+            
         }
-        if (e.which == 112) { //p
+        /*if (e.which == 112) { //p
             if ($('#signin').is(':visible')) {
                 
             }else{
@@ -459,11 +496,10 @@ function positionWidget(env){
 
 //JAVA, BLUETOOTH, AND SOCKET ACTION!
 function initCourier(){
-    
-	if (nativeProcess.running) {
-	   //already connected, do nothing
-	   return;
-	}   
+   if (nativeProcess.running) {
+   	nativeProcess.exit(true);
+   	return;
+   }
 	showBTLoading();
 	
 	var path_to_java = "";
@@ -486,36 +522,50 @@ function initCourier(){
 
         var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
         
-		var known_address = get_from_localStorage("known_address");
-		var user_weight = appData.Weight ? appData.Weight : "null";
+		var _address = get_from_localStorage("known_address");
+		if (_address == null) {
+			_address = "empty";
+		}
+		
+		var user_weight = appData.Weight ? appData.Weight : "empty";
 		
         var processArgs = new air.Vector["<String>"]();
         processArgs.push("-jar");
         processArgs.push("-d32"); //FORCE 32bit mode
 		
-		//processArgs.push(String(known_address)); //known address from local storage
-		//processArgs.push(user_weight); //known user weight
+		processArgs.push(np_file.nativePath);
 		
-        processArgs.push(np_file.nativePath);
+		processArgs.push(_address.fulltrim()); //known address from local storage
+		processArgs.push(user_weight); //known user weight
+		
+        
         
         var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
         nativeProcessStartupInfo.executable = java_file;
         nativeProcessStartupInfo.arguments = processArgs;
         
-        nativeProcess.start(nativeProcessStartupInfo); 
-        nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
+		air.trace("args: ", processArgs);
+		
+        try {
+			nativeProcess.start(nativeProcessStartupInfo);
+		} 
+		catch (e) {
+			air.trace("try np start:", e.message);
+		}
+		
+		nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
         nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
         nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
         nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
         nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
         
-        sendCourierMessage("searchDevices\n");
-        
+        //sendCourierMessage("searchDevices\n");
+		
     }
     else
     {
 		clearBTLoading(false);
-        alert("Your system does not support Bluetooth communication --- CODE:NO-NP001");
+        showMessage("Your system does not support Bluetooth communication --- CODE:NO-NP001");
     }
 	
 }
@@ -535,15 +585,36 @@ function sendCourierMessage(message){
 }
 
 function mock_onOutputData(msg){
-    
+    air.trace("in mock");
 	try {
-		msgData = JSON.parse(msg);
-		$.extend(courierData, msgData);
-		air.trace(msg);
-		initCounters();
+		var msgData = JSON.parse(msg);
+		
+		//if (msgData.hour >= courierData.hour) {// MAKE SURE THE DATA HAS NOT RESET like at MIDNIGHT
+			//IMPORTANT: extending courierData with the data we just got
+			$.extend(courierData, msgData);
+			air.trace(JSON.stringify(courierData));
+			add_to_localStorage('known_address', courierData.address);
+			workoutData = [];
+			//update timer
+			initCounters();
+			processCourierData();
+			
+			//WRITE ADDRESS TO LOCAL STORAGE
+			
+			
+			//STOP FLAG recieved
+			if (courierData.flag == "S") {
+				air.trace("STOP FLAG");
+				processCourierData();
+				
+				clearInterval(processDataInterval);
+				showMessage("Workout Ended");
+			}
+		//}
+		
 	} 
 	catch (e) {
-		air.trace("catch parse error:", e.message);
+		air.trace("catch parse errorMOCK:", e.message);
 	}
 }
 
@@ -551,64 +622,246 @@ function mock_onOutputData(msg){
 function onOutputData()
 {
 	var msg = nativeProcess.standardOutput.readUTFBytes(nativeProcess.standardOutput.bytesAvailable);
-    air.trace("courier message: ", msg);
+    
+	air.trace("courier message: ", msg);
 	
-	if (msg.indexOf("INQUIRY_COMPLETED") !== -1) {
-        
+	if (msg.indexOf("CONNECTED") !== -1) {
+		
+		BTCONNECTED = true;
 		air.trace("GOT CONNECT FROM COURIER");
 		clearBTLoading(true);
 		
-		showMessage(appLang[currLang]["msg_treadmill_connected"], function(){
-            setTimeout(hideMessage,3000);
-        });
+		//START PROCESS_COURIERDATA 20 SEC TIMER
+		initWorkoutData();
+		processDataInterval = setInterval(processCourierData, 20000);
+		
+		//WRITE ADDRESS TO LOCAL STORAGE
+        add_to_localStorage('known_address', msg.split("|")[1].fulltrim());
+		
+	}
+	else if (msg.indexOf("BTOFF") !== -1) {
+		
+		BTCONNECTED = false;
+		clearBTLoading(false);
+		//ask them to turn on BT on PC
+		
+		showMessage("Please turn on Bluetooth on your computer. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+	   $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+	   
+	}else if (msg.indexOf("NOTFOUND") !== -1) {
+	
+		BTCONNECTED = false;
+		clearBTLoading(false);
+		delete_from_localStorage('known_address');
+		//kill process
+		//ask them to turn on BT on PC
+		
+		showMessage("Please turn on Bluetooth on your Exercise Equipment. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+		
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	}
 	else if (msg.indexOf("address")) {
-	   
-	   try {
-	   	msgData = JSON.parse(msg);
-	   	$.extend(courierData, msgData);
-	   	air.trace(courierData);
-	   } 
-	   catch (e) {
-	       air.trace("catch parse error:", e.message);
-	   }
+		BTCONNECTED = true;
+		$("b.on").fadeIn("fast");
+		//set the text to connected
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
+		
+		try {
+			var msgData = JSON.parse(msg);
+			
+			//IMPORTANT: extending courierData with the data we just got
+			$.extend(courierData, msgData);
+			//air.trace(courierData);
+			
+			//update timer
+			initCounters();
+			
+			
+		} 
+		catch (e) {
+			air.trace("catch parse error:", e.message);
+		}
+		
 	}
+	else {
+		air.trace("UNKNOWN courier message: ", msg);
+	}
+		
 	//$("#wrapper ul").append("<li style='color:green'>msg: "+ msg+"</li>"); 
 }
 
 function onErrorData(event)
 {
-	var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable)
+	var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable);
+	
     air.trace("ERROR -", err);
+	
+	if (!BTCONNECTED) {
+		showMessage("An Error Occured: "+ appLang[currLang]["msg_treadmill_connect"] + " <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+	}
+	//nativeProcess.exit(true);
+	
 	//$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
 }
 
 function onExit(event)
 {
     air.trace("Process exited with ", event.exitCode);
+	BTCONNECTED = false;
 	clearBTLoading(false);
+	
 	//$("#wrapper ul").append('<input id="exit" type="button" value="Exit" class="button" />');
 	
+	//PUT BACK
+	clearInterval(processDataInterval);
+	$("b.on").fadeOut("fast");
+        //set the text to OFF
+    $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 }
 
 function onIOError(event)
 {
-     air.trace(event.toString());
+    air.trace(event.toString());
 }
 //END bluetooth event handlers
 
+function initWorkoutData(){
+	//get from localStorage if it exists
+	workoutData = get_from_localStorage("workoutData");
+	air.trace("initWorkoutData", workoutData);
+	if (workoutData !== null) {
+		workoutData = JSON.parse(workoutData);
+	}
+	else {
+		workoutData = [];
+	}
+	
+	
+}
+
+function processCourierData(){
+    
+	var courierTimeStamp = courierData.time.hour + ":" +courierData.time.minute+ ":" + courierData.time.second;
+	
+	/*if (workout_row && workout_row.timestamp) {
+		if ((workout_row.steps == courierData.steps) && (workout_row.timestamp !== "start")) {
+			//after 20 seconds, the most recent workoutdata is identical
+			//write pause flag
+			//showMessage("Pause", 2000);
+			courierData.flag = "P";
+		}
+		else 
+			if (workout_row.flag == "P") {
+				//KILL the 20 second process interval
+				clearInterval(processDataInterval);
+				showMessage("Workout Ended");
+				courierData.flag = "S";
+			}
+	}*/
+	if (courierData.flag === "S") {
+		showMessage("Workout Ended");
+		clearInterval(processDataInterval);
+		
+	}
+	else {
+		workout_row.patientid = ID_NUMBER;
+		workout_row.timestamp = courierTimeStamp;
+		workout_row.equip = courierData.devicetype;
+		workout_row.hr = courierData.time.hour;
+		workout_row.cal = courierData.calories;
+		workout_row.steps = courierData.steps;
+		workout_row.speed = courierData.speed.whole + "." + courierData.speed.fraction;
+		workout_row.dist = courierData.distance.whole + "." + courierData.distance.fraction;
+		workout_row.flag = courierData.flag;
+		
+		air.trace("");
+		air.trace("processCourierData: workout_row:", JSON.stringify(workout_row));
+		air.trace("");
+		
+		workoutData.push(workout_row);
+		delete_from_localStorage("workoutData");
+		add_to_localStorage("workoutData", JSON.stringify(workoutData));
+		
+	}
+		
+}
 
 function initCounters(){
-	// Initialize Steps counter
-    stepsCounter = new flipCounter('stepsflip-counter', {value:courierData.steps, inc:2, pace:1000, auto:false, precision:5});
-    // Initialize Calorie counter
-    calorieCounter = new flipCounter('caloriesflip-counter', {value:courierData.calories, inc:1, pace:1000, auto:false, precision:4});
-    // Initialize Distance counter
-    distanceCounter = new flipCounter('distanceflip-counter', {value:courierData.distance.whole, inc:1, pace:1000, auto:false, precision:4});
-    // Initialize Time Seconds counter
-    timeSecCounter = new flipCounter('timeSecflip-counter', {value:courierData.time.seconds, inc:1, pace:1000, auto:false, precision:2, maxCount:60});
-    // Initialize Time Minute counter
-    timeMinCounter = new flipCounter('timeMinflip-counter', {value:courierData.time.minute, inc:1, pace:62000, auto:false, precision:2});
+	if (courierData.flag == "") {
+		// Initialize Steps counter
+		stepsCounter = new flipCounter('stepsflip-counter', {
+			value: courierData.steps,
+			inc: 2,
+			pace: 1000,
+			auto: false,
+			precision: 5
+		});
+		// Initialize Calorie counter
+		calorieCounter = new flipCounter('caloriesflip-counter', {
+			value: courierData.calories,
+			inc: 1,
+			pace: 1000,
+			auto: false,
+			precision: 4
+		});
+		// Initialize Distance counter
+		distanceCounter = new flipCounter('distanceflip-counter', {
+			value: courierData.distance.whole,
+			inc: 1,
+			pace: 1000,
+			auto: false,
+			precision: 3
+		});
+		// Initialize Distance tenths counter
+		distanceTenthsCounter = new flipCounter('distanceTenthsflip-counter', {
+			value: courierData.distance.fraction,
+			inc: 1,
+			pace: 1000,
+			auto: false,
+			precision: 1
+		});
+		// Initialize Time Seconds counter
+		timeSecCounter = new flipCounter('timeSecflip-counter', {
+			value: courierData.time.second,
+			inc: 1,
+			pace: 1000,
+			auto: false,
+			precision: 2,
+			maxCount: 60
+		});
+		// Initialize Time Minute counter
+		timeMinCounter = new flipCounter('timeMinflip-counter', {
+			value: courierData.time.minute,
+			inc: 1,
+			pace: 62000,
+			auto: false,
+			precision: 2
+		});
+	}
+}
+function resetCourierData(){
+    courierData = {
+        "address": "000000000000",
+        "devicetype": "T",
+        "flag": "",
+        "uom": 0,
+        "steps": 0,
+        "calories": 0,
+        "speed": {
+            "whole": 0,
+            "fraction": 0
+        },
+        "distance": {
+            "whole": 0,
+            "fraction": 0
+        },
+        "time": {
+            "hour": 0,
+            "minute": 0,
+            "second": 0
+        }
+    };
+	initCounters();
 }
 
 function populateData(callback){
@@ -751,6 +1004,7 @@ function doImperial(){
 	
 	prepareChart("ul.actual_charts .distance");
 }
+
 function doMetric(){
     //console.log(appData);
     $(".Distance_1").html(appData.Distance_Metric_1);
@@ -774,6 +1028,7 @@ function doMetric(){
 	
 	prepareChart("ul.actual_charts .distance");
 }
+
 function translateTo(lang){
 	//console.log(appLang[lang]);
 	//FIND ALL span elements, and get their first assigned classname and check translations to see if it exists
@@ -801,7 +1056,7 @@ function translateTo(lang){
 	$("#exit").val(appLang[lang]["btn_exit"]);
 	
 	//translate the bluetooth status as well.
-	clearBTLoading();
+	clearBTLoading(BTCONNECTED);
 	
 	//german text is too long
 	/*if(lang == "de"){
@@ -930,6 +1185,7 @@ function checkForUpdate(){
 	appUpdater.initialize();
 	appUpdater.checkNow();
 }
+
 function doSignIn(callback){
     
     var data = null;
@@ -989,67 +1245,70 @@ function doSignIn(callback){
     return false;
     
 }
+
 function doSignOut(){
+	sendCourierMessage("exit\n");
+	//if (nativeProcess.running) {
+	//	nativeProcess.exit();
+	//}
     rememberUser();
     var calledp = false;
 	$(".inner").show("slow", function(){
         $(".pull_tab").addClass("close_inner").removeClass("close_timer open_inner close_tab");
     });
-	showMessage(appLang[currLang]["msg_sync_before_quit"]+ " <input class='doSync button' type='button' value='"+appLang[currLang]["btn_confirm_sync"]+"'/><input class='justQuit button' type='button' value='"+appLang[currLang]["btn_just_quit"]+"' />");
+	showMessage(appLang[currLang]["msg_sync_before_quit"]+ " <input class='doPromptSync button' type='button' value='"+appLang[currLang]["btn_confirm_sync"]+"'/><input class='justQuit button' type='button' value='"+appLang[currLang]["btn_just_quit"]+"' />");
 	
     
 }
+
 function doSync(quit_app){
+	
     showMessage(appLang[currLang]["msg_uploading"], function(){
 		
-		if (ID_NUMBER !== null && typeof ID_NUMBER != "undefined" ) {
-            //PUTBACK
-            /*var urlString = IHPPROCESS_URL + ID_NUMBER;
-            var urlReqx = new air.URLRequest(urlString);
-
-            var urlStreamx = new air.URLLoader();
-            try {
-                if(!calledp){
-                    air.trace("call processx: " + urlString);
-                    urlStreamx.load(urlReqx);
-                    calledp = true;
-                }
-            } 
-            catch (error) {
-                calledp = false;
-                alert("Could not call the process script.");
-            }*/
-        }
+		var data = get_from_localStorage("workoutData");
 		
-	   setTimeout(function(){
-	       
-		   if (quit_app) {
-		   	justQuit();
-		   }
-		   else {
-		   	hideMessage();
-		   }
-	   },2000);
+		getDataFrom(IHPPROCESS_URL+ID_NUMBER, data, function(response){
+			
+			air.trace("response from process: ", response);
+			
+			delete_from_localStorage("workoutData");
+			resetCourierData();
+			
+			//SYNC SUCCESSFULL?
+			
+			if (quit_app) {
+				justQuit();
+			}
+			else {
+				hideMessage();
+				
+			}
+		
+		});
 	
 	});
 }
+
 function justQuit(){
-    showMessage(appLang[currLang]["msg_session_ending"],
-        function(){
-            setTimeout(function(){
-                hideMessage();
-                $('#main, #login_items').fadeOut('slow', function(){
-                
-                    try{air.NativeApplication.nativeApplication.exit();}
-                    catch(e){}
-                });
-                
-                
-            },2000);
-            
-        
-    
-    });
+
+	showMessage(appLang[currLang]["msg_session_ending"], function(){
+		setTimeout(function(){
+			hideMessage();
+			$('#main, #login_items').fadeOut('slow', function(){
+			
+				try {
+					air.NativeApplication.nativeApplication.exit();
+				} 
+				catch (e) {
+				}
+			});
+			
+			
+		}, 2000);
+		
+		
+		
+	});
 }
 
 function rememberUser(){
@@ -1068,6 +1327,7 @@ function rememberUser(){
 		document.getElementById('remember').checked = false;
 	}
 }
+
 function doRemember(){
 	var username = get_from_localStorage('username');
     var pass = get_from_localStorage('password');
@@ -1107,6 +1367,8 @@ function getDataFrom(url, data, callback){
     } 
     catch (error) {
     	alert("Could not contact server.");
+		air.trace("sync process error: ", error.message);
+		callback(error.message);
     }
     
     return false;
@@ -1148,9 +1410,19 @@ function delete_from_localStorage(keyname){
 	air.EncryptedLocalStore.removeItem(keyname);
 }
 //UTIL
+function getDateTimeStamp(){
+	//24:06:15
+	
+    var date = new Date();
+	
+	return (date.getMonth()+1) + "/" + date.getDate() + "/" + date.getFullYear();
+	
+	
+}
 Array.max = function( array ){
     return Math.max.apply( Math, array );
 };
 Array.min = function( array ){
     return Math.min.apply( Math, array );
 };
+String.prototype.fulltrim=function(){return this.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ');}
