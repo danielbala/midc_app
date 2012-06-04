@@ -4,7 +4,7 @@ var
     IHPUSER_URL = 'https://www.interactivehealthpartner.com/idc/ihpuser.asp?id=',
     LANGUAGE_FILE = 'https://www.interactivehealthpartner.com/idc/midc-lang.json',
     APPDATA_URL = 'https://www.interactivehealthpartner.com/idc/midc-data.asp?id=',
-    IHPPROCESS_URL = 'https://www.interactivehealthpartner.com/idc/process.asp?id=',
+    IHPPROCESS_URL = 'https://www.interactivehealthpartner.com/idc/process-test.asp?id=',
     UPLOAD_URL = 'https://www.interactivehealthpartner.com/idc/server_upload.php?dest=',
     FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin',
 
@@ -142,10 +142,10 @@ function showBTLoading(){
     $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
 	btinterval = setInterval(
 	   function(){
-	   	$("b.on").fadeIn(500, function(){
+	   	$("b.on").stop().fadeIn(500, function(){
 	   		
 			bttimeout = setTimeout(function(){
-	   			$("b.on").fadeOut(500, function(){
+	   			$("b.on").stop().fadeOut(500, function(){
 				    //set the text to connecting...
                     $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
 				});
@@ -155,22 +155,34 @@ function showBTLoading(){
 	   }, 1800);
 }
 function clearBTLoading(connected){
-    
+
 	clearInterval(btinterval);
-    clearTimeout(bttimeout);
+	clearTimeout(bttimeout);
 	
-	
-	if (connected) {
-		
-		$("b.on").fadeIn("fast");
-		//set the text to connected
-		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
-	}
-	else {
+	setTimeout(function(){
 		BTCONNECTED = false;
-		$("b.on").fadeOut("fast");
+		$("b.on").stop().fadeOut("fast");
 		//set the text to OFF
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+		
+	}, 1900);
+	
+	
+}
+
+function showConnected(){
+	if (nativeProcess.running && BTCONNECTED) {
+		setTimeout(function(){
+			clearInterval(btinterval);
+			clearTimeout(bttimeout);
+			
+			$("b.on").fadeIn("fast");
+			//set the text to connected
+			$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
+		}, 1900);
+	}
+	else {
+		clearBTLoading(false);
 	}
 }
 
@@ -360,7 +372,7 @@ function keypressHandler(event){
             return false;*/
         }
 		
-        if (e.which == 49) { //#1
+        /*if (e.which == 49) { //#1
             //air.trace("ONE");
 			
 			courierData.steps++;
@@ -381,7 +393,7 @@ function keypressHandler(event){
             mock_onOutputData(JSON.stringify(courierData));
             
         }
-        /*if (e.which == 112) { //p
+        if (e.which == 112) { //p
             if ($('#signin').is(':visible')) {
                 
             }else{
@@ -629,7 +641,7 @@ function onOutputData()
 		
 		BTCONNECTED = true;
 		air.trace("GOT CONNECT FROM COURIER");
-		clearBTLoading(true);
+		
 		
 		//START PROCESS_COURIERDATA 20 SEC TIMER
 		initWorkoutData();
@@ -662,9 +674,6 @@ function onOutputData()
 	}
 	else if (msg.indexOf("address")) {
 		BTCONNECTED = true;
-		$("b.on").fadeIn("fast");
-		//set the text to connected
-		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
 		
 		try {
 			var msgData = JSON.parse(msg);
@@ -726,6 +735,7 @@ function onIOError(event)
 //END bluetooth event handlers
 
 function initWorkoutData(){
+	showConnected();
 	//get from localStorage if it exists
 	workoutData = get_from_localStorage("workoutData");
 	air.trace("initWorkoutData", workoutData);
@@ -758,7 +768,7 @@ function processCourierData(){
 				courierData.flag = "S";
 			}
 	}*/
-	if (courierData.flag === "S") {
+	if (courierData.flag == "S") {
 		showMessage("Workout Ended");
 		clearInterval(processDataInterval);
 		
@@ -772,21 +782,26 @@ function processCourierData(){
 		workout_row.steps = courierData.steps;
 		workout_row.speed = courierData.speed.whole + "." + courierData.speed.fraction;
 		workout_row.dist = courierData.distance.whole + "." + courierData.distance.fraction;
+		
+		
+		
+		if (workout_row.flag != "P") {
+			workoutData.push(workout_row);
+		}
 		workout_row.flag = courierData.flag;
 		
-		air.trace("");
-		air.trace("processCourierData: workout_row:", JSON.stringify(workout_row));
-		air.trace("");
-		
-		workoutData.push(workout_row);
 		delete_from_localStorage("workoutData");
 		add_to_localStorage("workoutData", JSON.stringify(workoutData));
+		air.trace("");
+        air.trace("processCourierData: workout_row:", JSON.stringify(workout_row));
+        air.trace("");
 		
 	}
 		
 }
 
 function initCounters(){
+	showConnected();
 	if (courierData.flag == "") {
 		// Initialize Steps counter
 		stepsCounter = new flipCounter('stepsflip-counter', {
@@ -810,7 +825,7 @@ function initCounters(){
 			inc: 1,
 			pace: 1000,
 			auto: false,
-			precision: 3
+			precision: 2
 		});
 		// Initialize Distance tenths counter
 		distanceTenthsCounter = new flipCounter('distanceTenthsflip-counter', {
@@ -818,7 +833,7 @@ function initCounters(){
 			inc: 1,
 			pace: 1000,
 			auto: false,
-			precision: 1
+			precision: 2
 		});
 		// Initialize Time Seconds counter
 		timeSecCounter = new flipCounter('timeSecflip-counter', {
@@ -958,7 +973,7 @@ function populateData(callback){
 		$(".Time_Daily_Average").html(appData.Time_Daily_Average);
 		
 		//if all the totals are 0
-		if(appData.Steps_Total == 0 && appData.Calories_Total == 0, appData.Distance_Total == 0 && appData.Time_Total == 0){
+		if(appData.Steps_Total == 0 && appData.Calories_Total == 0 && appData.Distance_Total == 0 && appData.Time_Total == 0){
 		  showMessage(appLang[currLang]["msg_no_treadmill_7days"]);
 		}
         
@@ -1248,9 +1263,9 @@ function doSignIn(callback){
 
 function doSignOut(){
 	sendCourierMessage("exit\n");
-	//if (nativeProcess.running) {
-	//	nativeProcess.exit();
-	//}
+	if (nativeProcess.running) {
+		nativeProcess.exit();
+	}
     rememberUser();
     var calledp = false;
 	$(".inner").show("slow", function(){
@@ -1262,10 +1277,13 @@ function doSignOut(){
 }
 
 function doSync(quit_app){
-	
+	if (nativeProcess.running) {
+	   showMessage("Workout Currently in Progress Please Try Again Later");
+	   return;
+	}
     showMessage(appLang[currLang]["msg_uploading"], function(){
 		
-		var data = get_from_localStorage("workoutData");
+		var data = "workoutdata="+get_from_localStorage("workoutData");
 		
 		getDataFrom(IHPPROCESS_URL+ID_NUMBER, data, function(response){
 			
@@ -1285,7 +1303,7 @@ function doSync(quit_app){
 			}
 		
 		});
-	
+	   hideMessage();
 	});
 }
 
