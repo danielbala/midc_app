@@ -131,59 +131,68 @@ function showMessage(msg, callback){
     }
 }
 function hideMessage(){
-    $(".alert_message p").html("");
-    $(".alert_message").css({zIndex: "-1"}).animate({top: "25px"}, "slow");
+    
+    $(".alert_message").css({zIndex: "-1"}).animate({top: "25px"}, "slow", function(){
+	   $(".alert_message p").html("");
+	});
 }
 
 var btinterval = 0;
 var bttimeout = 0;
 function showBTLoading(){
-	//set the text to connecting...
-    $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
-	btinterval = setInterval(
-	   function(){
-	   	$("b.on").stop().fadeIn(500, function(){
-	   		
-			bttimeout = setTimeout(function(){
-	   			$("b.on").stop().fadeOut(500, function(){
-				    //set the text to connecting...
-                    $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
-				});
-				
-	   		}, 700);
-	   	});
-	   }, 1800);
-}
-function clearBTLoading(connected){
-
-	clearInterval(btinterval);
-	clearTimeout(bttimeout);
+    
+	air.trace("\n show loading");
 	
-	setTimeout(function(){
-		BTCONNECTED = false;
-		$("b.on").stop().fadeOut("fast");
-		//set the text to OFF
-		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+	//set the text to connecting...
+	$(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
+	//every 1200ms
+	btinterval = setInterval(function(){
+		//fadein at a pace of 500ms
+		$("b.on").stop(true, true).fadeIn(500, function(){
 		
-	}, 1900);
+		    //wait 100 ms 
+			bttimeout = setTimeout(function(){
+				//fadeout at a pace of 500ms
+				$("b.on").stop(true, true).fadeOut(500);
+				
+			}, 100);
+			
+		});//END FADEIN
+		
+	}, 1200);
+}
+
+function showDisconnected(){
+	
+	air.trace("\n show disconnected");
+	
+	clearInterval(btinterval);
+    clearTimeout(bttimeout);
+
+	$("b.on").stop(true, true).fadeOut("fast");
+	
+	//set the text to OFF
+	$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	
 	
 }
 
 function showConnected(){
+	
+	air.trace("\n show connected");
+	
+	clearInterval(btinterval);
+    clearTimeout(bttimeout);
+
 	if (nativeProcess.running && BTCONNECTED) {
-		setTimeout(function(){
-			clearInterval(btinterval);
-			clearTimeout(bttimeout);
-			
-			$("b.on").fadeIn("fast");
-			//set the text to connected
-			$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
-		}, 1900);
+		
+		$("b.on").stop(true, true).fadeIn("fast");
+		
+		//set the text to connected
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
+		
 	}
-	else {
-		clearBTLoading(false);
-	}
+
 }
 
 function assignEventHandlers(env){
@@ -195,37 +204,38 @@ function assignEventHandlers(env){
         $("#progress").show();
         
         doSignIn(function(){
-            
-            populateData(function(){
-                
-                hideLoginItems(function(){
-    				
+		
+			populateData(function(){
+			
+				hideLoginItems(function(){
+				
 					prepareChart("ul.actual_charts .steps");
-    				prepareChart("ul.actual_charts .calories");
-    				prepareChart("ul.actual_charts .distance");
-    				prepareChart("ul.actual_charts .time");
-
-                    //open the settings menu so you can see the action going on
+					prepareChart("ul.actual_charts .calories");
+					prepareChart("ul.actual_charts .distance");
+					prepareChart("ul.actual_charts .time");
+					
+					
+					//position, set defaults and sticky
+					positionWidget(env);
+					
+					$('#main').fadeIn('slow');
+					
+					//open the settings menu so you can see the action going on
                     $(".tab_link").click();
+                    if ((appData.Steps_Total + appData.Calories_Total + appData.Distance_Total + appData.Time_Total) > 1) {
+                       //woot we have data
+                       air.trace("we have data");
+                    }
+                    else {
+                       showMessage(appLang[currLang]["msg_no_treadmill_7days"]);
+                    }
 					
-					//START BLUETOOTH LISTENER
-					initCourier();
+                    //START BLUETOOTH LISTENER
+                    initCourier();
 					
-					
-    				//position, set defaults and sticky
-    	            positionWidget(env);
-
-                    $('#main').fadeIn('slow');
-                    
-                    //setTimeout(function(){
-                	//    showMessage("Press 1 to start Time!<br /> Press 2 to start Steps<br /> Press p to Pause<br /> Press r to Resume");
-                	//},1000);
-
-    			});//END hideLoginItems(function(){
-    			
-            });//END populateData(function(){
-            
-        });//END doSignIn(function(){
+				});//END hideLoginItems(function(){
+			});//END populateData(function(){
+		});//END doSignIn(function(){
         
     });//END $('#signin').click(function(){
     
@@ -240,7 +250,7 @@ function assignEventHandlers(env){
 		hideMessage();
         initCourier();
     });
-	$(".doBluetooth").click(function(){
+	$(".doBluetooth").live("click", function(){
 		if (!nativeProcess.running) {
            showMessage(appLang[currLang]["msg_treadmill_connect"]+ " <input class='connectAgain button' type='button' value='"+appLang[currLang]["btn_yes"]+"'/><input class='close_message_bt button' type='button' value='"+appLang[currLang]["btn_no"]+"' />");
        }
@@ -416,17 +426,17 @@ function keypressHandler(event){
     
 }
 function hideLoginItems(callback){
-    $("#wrapper").css("background-image","none").css("background-color","transparent");
-    
-    $("#login_items div").fadeOut(1000, function(){
-        $("#login_items").fadeOut(700, function(){
-
-        }); 
-    });
-    
-    setTimeout(function(){
-        callback();
-    }, 1200);
+	$("#wrapper").css("background-image", "none").css("background-color", "transparent");
+	
+	$("#login_items div").fadeOut(500, function(){
+		$("#login_items").fadeOut(300, function(){
+		
+		});
+	});
+	setTimeout(function(){
+		callback();
+	}, 800);
+	
 }
 
 function prepareChart(item){
@@ -506,34 +516,38 @@ function positionWidget(env){
     }
 }
 
-//JAVA, BLUETOOTH, AND SOCKET ACTION!
 function initCourier(){
-   if (nativeProcess.running) {
-   	nativeProcess.exit(true);
-   	return;
-   }
+	
 	showBTLoading();
+	
+	air.trace("\n initCourier \n");
+	
+	if (nativeProcess.running) {
+		air.trace("\n already running from initCourier KILL IT \n");
+		nativeProcess.exit(true);
+		return;
+	}
+	
 	
 	var path_to_java = "";
 	if (OS === "mac") {
-	   path_to_java = "/usr/bin/java";
+		path_to_java = "/usr/bin/java";
 	}
 	else {
 		//c:\> for %i in (java.exe) do @echo.   %~$PATH:i
-	   path_to_java = "c:\\windows\\system32\\java.exe";
+		path_to_java = "c:\\windows\\system32\\java.exe";
 	}
 	
 	var java_file = new air.File(path_to_java); //PATH TO JAVA
-    air.trace("java path", java_file.nativePath);
+	air.trace("java path", java_file.nativePath);
 	
 	//alert(OS+" :: "+path_to_java+" :: "+"java path :: "+ java_file.nativePath);
 	
-	if(air.NativeProcess.isSupported)
-    {
-        air.trace("native process supported");
-
-        var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
-        
+	if (air.NativeProcess.isSupported) {
+		air.trace("native process supported");
+		
+		var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
+		
 		var _address = get_from_localStorage("known_address");
 		if (_address == null) {
 			_address = "empty";
@@ -541,24 +555,20 @@ function initCourier(){
 		
 		var user_weight = appData.Weight ? appData.Weight : "empty";
 		
-        var processArgs = new air.Vector["<String>"]();
-        processArgs.push("-jar");
-        processArgs.push("-d32"); //FORCE 32bit mode
-		
+		var processArgs = new air.Vector["<String>"]();
+		processArgs.push("-jar");
+		processArgs.push("-d32"); //FORCE 32bit mode
 		processArgs.push(np_file.nativePath);
 		
 		processArgs.push(_address.fulltrim()); //known address from local storage
 		processArgs.push(user_weight); //known user weight
+		var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+		nativeProcessStartupInfo.executable = java_file;
+		nativeProcessStartupInfo.arguments = processArgs;
 		
-        
-        
-        var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
-        nativeProcessStartupInfo.executable = java_file;
-        nativeProcessStartupInfo.arguments = processArgs;
-        
 		air.trace("args: ", processArgs);
 		
-        try {
+		try {
 			nativeProcess.start(nativeProcessStartupInfo);
 		} 
 		catch (e) {
@@ -566,19 +576,18 @@ function initCourier(){
 		}
 		
 		nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
-        nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
-        nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
-        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
-        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
-        
-        //sendCourierMessage("searchDevices\n");
+		nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
+		nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
+		nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
+		nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
 		
-    }
-    else
-    {
-		clearBTLoading(false);
-        showMessage("Your system does not support Bluetooth communication --- CODE:NO-NP001");
-    }
+		//sendCourierMessage("searchDevices\n");
+	
+	}
+	else {
+		showDisconnected();
+		showMessage("Your system does not support Bluetooth communication --- CODE:NO-NP001");
+	}
 	
 }
 //@param string message
@@ -591,7 +600,6 @@ function sendCourierMessage(message){
 		
 	}
 	else {
-        clearBTLoading(false);
 		air.trace("process not running:"+ message);
 	}
 }
@@ -626,7 +634,7 @@ function mock_onOutputData(msg){
 		
 	} 
 	catch (e) {
-		air.trace("catch parse errorMOCK:", e.message);
+		//air.trace("catch parse errorMOCK:", e.message);
 	}
 }
 
@@ -635,11 +643,12 @@ function onOutputData()
 {
 	var msg = nativeProcess.standardOutput.readUTFBytes(nativeProcess.standardOutput.bytesAvailable);
     
-	air.trace("courier message: ", msg);
+	//air.trace("courier message: ", msg);
 	
 	if (msg.indexOf("CONNECTED") !== -1) {
 		
 		BTCONNECTED = true;
+		showConnected();
 		air.trace("GOT CONNECT FROM COURIER");
 		
 		
@@ -654,16 +663,16 @@ function onOutputData()
 	else if (msg.indexOf("BTOFF") !== -1) {
 		
 		BTCONNECTED = false;
-		clearBTLoading(false);
-		//ask them to turn on BT on PC
 		
+		//ask them to turn on BT on PC
+				
 		showMessage("Please turn on Bluetooth on your computer. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
 	   $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	   
 	}else if (msg.indexOf("NOTFOUND") !== -1) {
 	
 		BTCONNECTED = false;
-		clearBTLoading(false);
+		
 		delete_from_localStorage('known_address');
 		//kill process
 		//ask them to turn on BT on PC
@@ -672,19 +681,21 @@ function onOutputData()
 		
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	}
-	else if (msg.indexOf("address")) {
+	else if (msg.indexOf("address") !== -1) {
+		
 		BTCONNECTED = true;
 		
+		air.trace("courier message: ", msg);
 		try {
 			var msgData = JSON.parse(msg);
 			
 			//IMPORTANT: extending courierData with the data we just got
+			
 			$.extend(courierData, msgData);
 			//air.trace(courierData);
 			
 			//update timer
 			initCounters();
-			
 			
 		} 
 		catch (e) {
@@ -693,7 +704,7 @@ function onOutputData()
 		
 	}
 	else {
-		air.trace("UNKNOWN courier message: ", msg);
+		air.trace("courier message: ", msg);
 	}
 		
 	//$("#wrapper ul").append("<li style='color:green'>msg: "+ msg+"</li>"); 
@@ -705,11 +716,6 @@ function onErrorData(event)
 	
     air.trace("ERROR -", err);
 	
-	if (!BTCONNECTED) {
-		showMessage("An Error Occured: "+ appLang[currLang]["msg_treadmill_connect"] + " <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
-	}
-	//nativeProcess.exit(true);
-	
 	//$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
 }
 
@@ -717,15 +723,10 @@ function onExit(event)
 {
     air.trace("Process exited with ", event.exitCode);
 	BTCONNECTED = false;
-	clearBTLoading(false);
+	
+	showDisconnected();
 	
 	//$("#wrapper ul").append('<input id="exit" type="button" value="Exit" class="button" />');
-	
-	//PUT BACK
-	clearInterval(processDataInterval);
-	$("b.on").fadeOut("fast");
-        //set the text to OFF
-    $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 }
 
 function onIOError(event)
@@ -735,7 +736,8 @@ function onIOError(event)
 //END bluetooth event handlers
 
 function initWorkoutData(){
-	showConnected();
+	BTCONNECTED = true;
+
 	//get from localStorage if it exists
 	workoutData = get_from_localStorage("workoutData");
 	air.trace("initWorkoutData", workoutData);
@@ -750,58 +752,43 @@ function initWorkoutData(){
 }
 
 function processCourierData(){
-    
+	BTCONNECTED = true;
+	
 	var courierTimeStamp = courierData.time.hour + ":" +courierData.time.minute+ ":" + courierData.time.second;
 	
-	/*if (workout_row && workout_row.timestamp) {
-		if ((workout_row.steps == courierData.steps) && (workout_row.timestamp !== "start")) {
-			//after 20 seconds, the most recent workoutdata is identical
-			//write pause flag
-			//showMessage("Pause", 2000);
-			courierData.flag = "P";
-		}
-		else 
-			if (workout_row.flag == "P") {
-				//KILL the 20 second process interval
-				clearInterval(processDataInterval);
-				showMessage("Workout Ended");
-				courierData.flag = "S";
-			}
-	}*/
 	if (courierData.flag == "S") {
+		
 		showMessage("Workout Ended");
 		clearInterval(processDataInterval);
-		
+				
 	}
 	else {
-		workout_row.patientid = ID_NUMBER;
-		workout_row.timestamp = courierTimeStamp;
-		workout_row.equip = courierData.devicetype;
-		workout_row.hr = courierData.time.hour;
-		workout_row.cal = courierData.calories;
-		workout_row.steps = courierData.steps;
-		workout_row.speed = courierData.speed.whole + "." + courierData.speed.fraction;
-		workout_row.dist = courierData.distance.whole + "." + courierData.distance.fraction;
-		
-		
-		
-		if (workout_row.flag != "P") {
+		workout_row.flag = courierData.flag;
+		if (workout_row.flag !== "P") {
+			workout_row.patientid = ID_NUMBER;
+			workout_row.timestamp = courierTimeStamp;
+			workout_row.equip = courierData.devicetype;
+			workout_row.hr = courierData.time.hour;
+			workout_row.cal = courierData.calories;
+			workout_row.steps = courierData.steps;
+			workout_row.speed = courierData.speed.whole + "." + courierData.speed.fraction;
+			workout_row.dist = courierData.distance.whole + "." + courierData.distance.fraction;
+			workout_row.displayunits = courierData.uom ? "imperial" : "metric"; //machine reports 0=metric or 1=imperial
 			workoutData.push(workout_row);
 		}
-		workout_row.flag = courierData.flag;
+		
 		
 		delete_from_localStorage("workoutData");
 		add_to_localStorage("workoutData", JSON.stringify(workoutData));
-		air.trace("");
-        air.trace("processCourierData: workout_row:", JSON.stringify(workout_row));
-        air.trace("");
+		
+		air.trace("\n processCourierData: workout_row:", JSON.stringify(workout_row));
+		
 		
 	}
 		
 }
 
 function initCounters(){
-	showConnected();
 	if (courierData.flag == "") {
 		// Initialize Steps counter
 		stepsCounter = new flipCounter('stepsflip-counter', {
@@ -885,7 +872,7 @@ function populateData(callback){
     
     getDataFrom(APPDATA_URL+ID_NUMBER, "", function(response){
         
-        //air.trace("popdataback ", response);
+        air.trace("popdataback ", response);
         
         appData = JSON.parse(response);
         
@@ -972,11 +959,7 @@ function populateData(callback){
 		$(".Time_Total").html(appData.Time_Total);
 		$(".Time_Daily_Average").html(appData.Time_Daily_Average);
 		
-		//if all the totals are 0
-		if(appData.Steps_Total == 0 && appData.Calories_Total == 0 && appData.Distance_Total == 0 && appData.Time_Total == 0){
-		  showMessage(appLang[currLang]["msg_no_treadmill_7days"]);
-		}
-        
+		
 		//TRANSLATE DAY OF THE WEEK ABBREVIATIONS
 	    if (typeof appData.Xaxis_1 != "undefined") {
 	        $(".Xaxis_1").html(appLang[currLang]["lbl_" + appData.Xaxis_1.toLowerCase()]);
@@ -991,7 +974,6 @@ function populateData(callback){
         return false;
     });
 	
-	showMessage(appLang[currLang]["msg_no_treadmill_yet"]);
     return false;
 }
 
@@ -1071,15 +1053,9 @@ function translateTo(lang){
 	$("#exit").val(appLang[lang]["btn_exit"]);
 	
 	//translate the bluetooth status as well.
-	clearBTLoading(BTCONNECTED);
-	
-	//german text is too long
-	/*if(lang == "de"){
-	    $(".lbl_calories").css("font-size","13px");
-	}else{
-	    $(".lbl_calories").css("font-size","inherit");
-	}*/
-	
+	showDisconnected();
+	showConnected();
+		
 	//STORE LAST SELECTED LANGUAGE
 	try{
 	    add_to_localStorage('appLang',lang);
@@ -1279,31 +1255,33 @@ function doSignOut(){
 function doSync(quit_app){
 	if (nativeProcess.running) {
 	   showMessage("Workout Currently in Progress Please Try Again Later");
-	   return;
+	   return false;
 	}
     showMessage(appLang[currLang]["msg_uploading"], function(){
+	
+		setTimeout(function(){
 		
-		var data = "workoutdata="+get_from_localStorage("workoutData");
-		
-		getDataFrom(IHPPROCESS_URL+ID_NUMBER, data, function(response){
+			var data = "workoutdata=" + get_from_localStorage("workoutData");
 			
-			air.trace("response from process: ", response);
+			getDataFrom(IHPPROCESS_URL + ID_NUMBER, data, function(response){
 			
-			delete_from_localStorage("workoutData");
-			resetCourierData();
-			
-			//SYNC SUCCESSFULL?
-			
-			if (quit_app) {
-				justQuit();
-			}
-			else {
-				hideMessage();
+				air.trace("response from process: ", response);
 				
-			}
+				delete_from_localStorage("workoutData");
+				resetCourierData();
+				
+				//SYNC SUCCESSFULL?
+				
+				if (quit_app) {
+					justQuit();
+				}
+				
+			});
+			
+			hideMessage();
 		
-		});
-	   hideMessage();
+		}, 1000);
+	
 	});
 }
 
