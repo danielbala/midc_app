@@ -15,6 +15,8 @@ var
 
 // FOR TESTING
     OFFLINE = false,
+    
+	SYNC_ATTEMPTED = false;
 
 //data object holders 
     appData = {},
@@ -142,7 +144,7 @@ var bttimeout = 0;
 function showBTLoading(){
     
 	air.trace("\n show loading");
-	
+	$("#console").append("<br/> show loading state ");
 	//set the text to connecting...
 	$(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
 	//every 1200ms
@@ -165,6 +167,7 @@ function showBTLoading(){
 function showDisconnected(){
 	
 	air.trace("\n show disconnected");
+	$("#console").append("<br/> show disconnected state");
 	
 	clearInterval(btinterval);
     clearTimeout(bttimeout);
@@ -178,21 +181,25 @@ function showDisconnected(){
 }
 
 function showConnected(){
-	
+
 	air.trace("\n show connected");
+	$("#console").append("<br/> show connected state");
 	
 	clearInterval(btinterval);
-    clearTimeout(bttimeout);
-
+	clearTimeout(bttimeout);
+	
 	if (nativeProcess.running && BTCONNECTED) {
+	
+		setTimeout(function(){
+			$("b.on").stop(true, true).fadeIn("fast");
+		}, 1300);
 		
-		$("b.on").stop(true, true).fadeIn("fast");
 		
 		//set the text to connected
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
 		
 	}
-
+	
 }
 
 function assignEventHandlers(env){
@@ -228,6 +235,7 @@ function assignEventHandlers(env){
                     }
                     else {
                        showMessage(appLang[currLang]["msg_no_treadmill_7days"]);
+					   $("#console").append("<br/> no workout data for the past 7 days");
                     }
 					
                     //START BLUETOOTH LISTENER
@@ -329,7 +337,7 @@ function assignEventHandlers(env){
 		$(".settings_menu").removeClass("settings_menu_on");
 		return false;
     });
-	$(".translate").click(function(){
+	$(".translate").live("click", function(){
         currLang = $(this).attr("rel");
 		translateTo($(this).attr("rel"));
 		$(".settings_menu").removeClass("settings_menu_on");
@@ -357,7 +365,7 @@ function assignEventHandlers(env){
 }
 function keypressHandler(event){
     $('body').keypress(function(e){
-        //air.trace(e.which);
+        //alert(e.which);
 		//ENTER key
         //enter should submit
         if (e.which == 13) {
@@ -381,7 +389,12 @@ function keypressHandler(event){
             e.preventDefault();
             return false;*/
         }
-		
+		if (e.which == 67) { //control+c
+            air.trace("toggle console");
+            
+			$("#console").toggle();
+              
+        }
         /*if (e.which == 49) { //#1
             //air.trace("ONE");
 			
@@ -521,9 +534,11 @@ function initCourier(){
 	showBTLoading();
 	
 	air.trace("\n initCourier \n");
+	$("#console").append("<br/><br/> --initCourier-- <br/>");
 	
 	if (nativeProcess.running) {
 		air.trace("\n already running from initCourier KILL IT \n");
+		$("#console").append("<br/> already running from initCourier KILL IT ");
 		nativeProcess.exit(true);
 		return;
 	}
@@ -540,11 +555,13 @@ function initCourier(){
 	
 	var java_file = new air.File(path_to_java); //PATH TO JAVA
 	air.trace("java path", java_file.nativePath);
+	$("#console").append("<br/> java path: "+ java_file.nativePath );
 	
 	//alert(OS+" :: "+path_to_java+" :: "+"java path :: "+ java_file.nativePath);
 	
 	if (air.NativeProcess.isSupported) {
 		air.trace("native process supported");
+		$("#console").append("<br/> native process is supported");
 		
 		var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
 		
@@ -567,12 +584,14 @@ function initCourier(){
 		nativeProcessStartupInfo.arguments = processArgs;
 		
 		air.trace("args: ", processArgs);
+		$("#console").append("<br/> args: "+ processArgs );
 		
 		try {
 			nativeProcess.start(nativeProcessStartupInfo);
 		} 
 		catch (e) {
 			air.trace("try np start:", e.message);
+			$("#console").append("<br/> try np start: "+ e.message );
 		}
 		
 		nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
@@ -628,7 +647,7 @@ function mock_onOutputData(msg){
 				processCourierData();
 				
 				clearInterval(processDataInterval);
-				showMessage("Workout Ended");
+				showMessage(appLang[currLang]["msg_workout_ended"]);
 			}
 		//}
 		
@@ -650,6 +669,7 @@ function onOutputData()
 		BTCONNECTED = true;
 		showConnected();
 		air.trace("GOT CONNECT FROM COURIER");
+		$("#console").append("<br/> GOT CONNECT FROM COURIER");
 		
 		
 		//START PROCESS_COURIERDATA 20 SEC TIMER
@@ -666,7 +686,7 @@ function onOutputData()
 		
 		//ask them to turn on BT on PC
 				
-		showMessage("Please turn on Bluetooth on your computer. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+		showMessage(appLang[currLang]["msg_bt_pc_retry"]+" <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
 	   $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	   
 	}else if (msg.indexOf("NOTFOUND") !== -1) {
@@ -677,7 +697,7 @@ function onOutputData()
 		//kill process
 		//ask them to turn on BT on PC
 		
-		showMessage("Please turn on Bluetooth on your Exercise Equipment. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+		showMessage(appLang[currLang]["msg_bt_equip_retry"]+" <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
 		
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	}
@@ -686,6 +706,7 @@ function onOutputData()
 		BTCONNECTED = true;
 		
 		air.trace("courier message: ", msg);
+		$("#console").append("<br/> courier message: "+ msg );
 		try {
 			var msgData = JSON.parse(msg);
 			
@@ -700,11 +721,13 @@ function onOutputData()
 		} 
 		catch (e) {
 			air.trace("catch parse error:", e.message);
+			$("#console").append("<br/> catch parse error: "+ e.message );
 		}
 		
 	}
 	else {
 		air.trace("courier message: ", msg);
+		$("#console").append("<br/>else courier message: "+ msg );
 	}
 		
 	//$("#wrapper ul").append("<li style='color:green'>msg: "+ msg+"</li>"); 
@@ -715,6 +738,13 @@ function onErrorData(event)
 	var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable);
 	
     air.trace("ERROR -", err);
+	$("#console").append("<br/> ERROR: "+ err );
+	if (err.indexOf("bluetooth support") !== -1) {
+		//ask them to turn on BT on PC
+		
+		showMessage("Please turn on Bluetooth on your computer. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+	}
 	
 	//$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
 }
@@ -722,6 +752,7 @@ function onErrorData(event)
 function onExit(event)
 {
     air.trace("Process exited with ", event.exitCode);
+	$("#console").append("<br/> courier exited with code: "+ event.exitCode );
 	BTCONNECTED = false;
 	
 	showDisconnected();
@@ -732,6 +763,7 @@ function onExit(event)
 function onIOError(event)
 {
     air.trace(event.toString());
+	$("#console").append("<br/> IOERROR: "+ event.toString() );
 }
 //END bluetooth event handlers
 
@@ -741,6 +773,8 @@ function initWorkoutData(){
 	//get from localStorage if it exists
 	workoutData = get_from_localStorage("workoutData");
 	air.trace("initWorkoutData", workoutData);
+	$("#console").append("<br/> init Workout Data: "+ workoutData );
+	
 	if (workoutData !== null) {
 		workoutData = JSON.parse(workoutData);
 	}
@@ -758,7 +792,7 @@ function processCourierData(){
 	
 	if (courierData.flag == "S") {
 		
-		showMessage("Workout Ended");
+		showMessage(appLang[currLang]["msg_workout_ended"]);
 		clearInterval(processDataInterval);
 				
 	}
@@ -777,11 +811,13 @@ function processCourierData(){
 			workoutData.push(workout_row);
 		}
 		
+		air.trace("\n processCourierData: workout_row:", JSON.stringify(workout_row));
+        $("#console").append("<br/> processCourierData: workout_row: "+  JSON.stringify(workout_row));
 		
 		delete_from_localStorage("workoutData");
 		add_to_localStorage("workoutData", JSON.stringify(workoutData));
 		
-		air.trace("\n processCourierData: workout_row:", JSON.stringify(workout_row));
+		
 		
 		
 	}
@@ -873,6 +909,7 @@ function populateData(callback){
     getDataFrom(APPDATA_URL+ID_NUMBER, "", function(response){
         
         air.trace("popdataback ", response);
+		$("#console").append("<br/> data from server: "+ response);
         
         appData = JSON.parse(response);
         
@@ -1065,8 +1102,10 @@ function translateTo(lang){
 }
 
 function getAppLanguage(callback){
+	
 	appLang = {
 	    "en": {
+			"language": "English",
 	        "lbl_lastname": "Last Name",
 			"lbl_password": "Password",
 			"lbl_remember": "Remember Me",
@@ -1111,9 +1150,14 @@ function getAppLanguage(callback){
 	        "msg_uploading": "uploading exercise data <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
 	        "msg_upload_complete": "upload complete",
 			"msg_session_ending": "IHP Data Communicator Session Ending <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
-			"msg_sync_before_quit": "Do you want to Sync before you quit?"
+			"msg_sync_before_quit": "Do you want to Sync before you quit?",
+			"msg_workout_ended": "Workout Ended",
+			"msg_bt_equip_retry": "Please turn on Bluetooth on your Exercise Equipment. Retry?",
+			"msg_bt_pc_retry": "Please turn on Bluetooth on your computer. Retry?",
+			"msg_workout_inprogress": "Workout Currently in Progress Please Try Again Later"
 	    },
 	    "de": {
+			"language": "German",
 			"lbl_lastname": "Nachname",
             "lbl_password": "Passwort",
             "lbl_remember": "Remember Me",
@@ -1158,13 +1202,24 @@ function getAppLanguage(callback){
 	        "msg_uploading": "Trainingsdaten werden &uuml;bertragen   <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
 	        "msg_upload_complete": "Daten&uuml;bertragung vollst&auml;ndig",
 			"msg_session_ending": "IHP Datenkommunikator Sitzungsende   <img src='icons/loading.gif' alt='loading' width='43' height='11' />",
-			"msg_sync_before_quit": "Wollen Sie synchronisieren, bevor Sie aufh&uuml;ren?"
+			"msg_sync_before_quit": "Wollen Sie synchronisieren, bevor Sie aufh&uuml;ren?",
+            "msg_workout_ended": "Workout Ended",
+            "msg_bt_equip_retry": "Bitte schalten Sie Bluetooth auf Ihrem Sportger&auml;te. Wiederholung?",
+            "msg_bt_pc_retry": "Bitte schalten Sie Bluetooth auf Ihrem Computer. Wiederholung?",
+            "msg_workout_inprogress": "Workout Currently in Progress Please Try Again Later"
 	    },
 	    "fr": {}
 	};
 	
 	//getDataFrom(LANGUAGE_FILE, "", function(response){
 	//   appLang = JSON.parse(response);
+		for (prop in appLang) {
+			if (appLang[prop]['language']) {
+				$(".langs").append('<a class="translate" rel="' + prop.toString() + '" href="#' + prop.toString() + '">' + appLang[prop]['language'] + '</a>');
+				air.trace('<a class="translate" rel="' + prop.toString() + '" href="#' + prop.toString() + '">' + appLang[prop]['language'] + '</a>');
+			}
+	    }
+	   
 	   callback.call();
 	//});
 }
@@ -1247,14 +1302,16 @@ function doSignOut(){
 	$(".inner").show("slow", function(){
         $(".pull_tab").addClass("close_inner").removeClass("close_timer open_inner close_tab");
     });
-	showMessage(appLang[currLang]["msg_sync_before_quit"]+ " <input class='doPromptSync button' type='button' value='"+appLang[currLang]["btn_confirm_sync"]+"'/><input class='justQuit button' type='button' value='"+appLang[currLang]["btn_just_quit"]+"' />");
 	
+	if (!SYNC_ATTEMPTED) {
+		showMessage(appLang[currLang]["msg_sync_before_quit"] + " <input class='doPromptSync button' type='button' value='" + appLang[currLang]["btn_confirm_sync"] + "'/><input class='justQuit button' type='button' value='" + appLang[currLang]["btn_just_quit"] + "' />");
+	}
     
 }
 
 function doSync(quit_app){
 	if (nativeProcess.running) {
-	   showMessage("Workout Currently in Progress Please Try Again Later");
+	   showMessage(appLang[currLang]["msg_workout_inprogress"]);
 	   return false;
 	}
     showMessage(appLang[currLang]["msg_uploading"], function(){
@@ -1266,9 +1323,12 @@ function doSync(quit_app){
 			getDataFrom(IHPPROCESS_URL + ID_NUMBER, data, function(response){
 			
 				air.trace("response from process: ", response);
+				$("#console").append("<br/> sync response from server: "+ response);
 				
 				delete_from_localStorage("workoutData");
 				resetCourierData();
+				
+				SYNC_ATTEMPTED = true;
 				
 				//SYNC SUCCESSFULL?
 				
@@ -1338,6 +1398,7 @@ function removeUser(){
 }
 function getDataFrom(url, data, callback){
     air.trace("getdatafromurl: "+ url + " -data: "+data);
+	$("#console").append("<br/> make server call: "+ url + " -data: "+data);
 	//air.trace(url);
     //air.trace(data);
 		
@@ -1364,6 +1425,7 @@ function getDataFrom(url, data, callback){
     catch (error) {
     	alert("Could not contact server.");
 		air.trace("sync process error: ", error.message);
+		$("#console").append("<br/> sync error: "+ error.message);
 		callback(error.message);
     }
     
@@ -1377,6 +1439,7 @@ function getDataFrom(url, data, callback){
 //@param string value
 function add_to_localStorage(keyname, value){
 	air.trace("add_to_localStorage: "+ keyname + "=" + value);
+	$("#console").append("<br/> add_to_localStorage: "+ keyname + "=" + value);
     
 	var data = new air.ByteArray();
     data.writeUTFBytes(value);
@@ -1395,6 +1458,7 @@ function get_from_localStorage(keyname){
 		return_val = value.readUTFBytes(value.bytesAvailable);
 	}
 	air.trace("get_from_localStorage: "+ keyname + "=" + return_val);
+	$("#console").append("<br/> get_from_localStorage: "+ keyname + "=" + return_val);
     
 	return return_val;
 }
@@ -1402,7 +1466,7 @@ function get_from_localStorage(keyname){
 //@param key name
 function delete_from_localStorage(keyname){
 	air.trace("delete_from_localStorage: "+ keyname);
-	
+	$("#console").append("<br/> delete_from_localStorage: "+ keyname );
 	air.EncryptedLocalStore.removeItem(keyname);
 }
 //UTIL
