@@ -32,7 +32,7 @@ var
 //courier communication object
     courierData = {
 	    "address": "",
-		"devicetype": "T",
+		"devicetype": "D",
 		"flag": "",
 	    "uom": 0,
 	    "steps": 0,
@@ -78,6 +78,8 @@ try{
 }catch(e){}
 
 function doLoad(env){
+	
+	delete_from_localStorage("workoutData");
 	
 	//checkForUpdate(); //PUT BACK
 	
@@ -171,6 +173,7 @@ function showDisconnected(){
 	
 	clearInterval(btinterval);
     clearTimeout(bttimeout);
+	clearInterval(processDataInterval);
 
 	$("b.on").stop(true, true).fadeOut("fast");
 	
@@ -571,6 +574,7 @@ function initCourier(){
 		}
 		
 		var user_weight = appData.Weight ? appData.Weight : "empty";
+		var device_names = appData.Device_Names ? appData.Device_Names : "empty";
 		
 		var processArgs = new air.Vector["<String>"]();
 		processArgs.push("-jar");
@@ -579,6 +583,8 @@ function initCourier(){
 		
 		processArgs.push(_address.fulltrim()); //known address from local storage
 		processArgs.push(user_weight); //known user weight
+		processArgs.push(device_names); //"ENDEX,LifeSpan" NO SPACES IN FILE NAME
+		
 		var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
 		nativeProcessStartupInfo.executable = java_file;
 		nativeProcessStartupInfo.arguments = processArgs;
@@ -623,39 +629,6 @@ function sendCourierMessage(message){
 	}
 }
 
-function mock_onOutputData(msg){
-    air.trace("in mock");
-	try {
-		var msgData = JSON.parse(msg);
-		
-		//if (msgData.hour >= courierData.hour) {// MAKE SURE THE DATA HAS NOT RESET like at MIDNIGHT
-			//IMPORTANT: extending courierData with the data we just got
-			$.extend(courierData, msgData);
-			air.trace(JSON.stringify(courierData));
-			add_to_localStorage('known_address', courierData.address);
-			workoutData = [];
-			//update timer
-			initCounters();
-			processCourierData();
-			
-			//WRITE ADDRESS TO LOCAL STORAGE
-			
-			
-			//STOP FLAG recieved
-			if (courierData.flag == "S") {
-				air.trace("STOP FLAG");
-				processCourierData();
-				
-				clearInterval(processDataInterval);
-				showMessage(appLang[currLang]["msg_workout_ended"]);
-			}
-		//}
-		
-	} 
-	catch (e) {
-		//air.trace("catch parse errorMOCK:", e.message);
-	}
-}
 
 //bluetooth event handlers
 function onOutputData()
@@ -708,11 +681,11 @@ function onOutputData()
 		air.trace("courier message: ", msg);
 		$("#console").append("<br/> courier message: "+ msg );
 		try {
-			var msgData = JSON.parse(msg);
-			
+			//var msgData = JSON.parse(msg);
+			courierData = JSON.parse(msg);
 			//IMPORTANT: extending courierData with the data we just got
 			
-			$.extend(courierData, msgData);
+			//$.extend(courierData, msgData);
 			//air.trace(courierData);
 			
 			//update timer
@@ -742,7 +715,7 @@ function onErrorData(event)
 	if (err.indexOf("bluetooth support") !== -1) {
 		//ask them to turn on BT on PC
 		
-		showMessage("Please turn on Bluetooth on your computer. Retry? <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+		showMessage(appLang[currLang]["msg_bt_pc_retry"]+" <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
 	}
 	
@@ -797,25 +770,49 @@ function processCourierData(){
 				
 	}
 	else {
-		workout_row.flag = courierData.flag;
-		if (workout_row.flag !== "P") {
-			workout_row.patientid = ID_NUMBER;
-			workout_row.timestamp = courierTimeStamp;
-			workout_row.equip = courierData.devicetype;
+		//workout_row.flag = courierData.flag;
+		if (courierData.flag !== "P" && courierData.steps !== -1) {
+			
+			/*workout_row.patientid = ID_NUMBER;
+			workout_row.timestamp = courierData.time.hour + ":" +courierData.time.minute+ ":" + courierData.time.second;
+			workout_row.equip = "D"; //courierData.devicetype;
 			workout_row.hr = courierData.time.hour;
 			workout_row.cal = courierData.calories;
 			workout_row.steps = courierData.steps;
 			workout_row.speed = courierData.speed.whole + "." + courierData.speed.fraction;
 			workout_row.dist = courierData.distance.whole + "." + courierData.distance.fraction;
-			workout_row.displayunits = courierData.uom ? "imperial" : "metric"; //machine reports 0=metric or 1=imperial
-			workoutData.push(workout_row);
+			workout_row.displayunits = courierData.uom ? "E" : "M"; //machine reports 0=metric or 1=imperial
+			//workoutData.push(workout_row);
+			*/
+			var temp_workout_row = {
+                "patientid" : ID_NUMBER,
+                "datestamp" : today_date,
+                "timestamp" : courierData.time.hour + ":" +courierData.time.minute+ ":" + courierData.time.second,
+                "equip" : "D", //courierData.devicetype
+                "hr" : courierData.time.hour,
+                "cal" : courierData.calories,
+                "steps" : courierData.steps,
+                "speed" : courierData.speed.whole +"."+ courierData.speed.fraction,
+                "dist" : courierData.distance.whole +"."+ courierData.distance.fraction,
+                "watt" : "",
+                "flag" : courierData.flag,
+                "displayunits" : courierData.uom ? "E" : "M", //machine reports 0=metric or 1=imperial,
+                "extrafield": ""
+            }
+			workoutData.push(temp_workout_row);
+			
+			
+			
+			
+			air.trace("\n processCourierData: workout_row:", JSON.stringify(temp_workout_row));
+			
+	        $("#console").append("<br/> processCourierData: workout_row: "+  JSON.stringify(temp_workout_row));
+	        
+	        delete_from_localStorage("workoutData");
+	        add_to_localStorage("workoutData", JSON.stringify(workoutData));
 		}
 		
-		air.trace("\n processCourierData: workout_row:", JSON.stringify(workout_row));
-        $("#console").append("<br/> processCourierData: workout_row: "+  JSON.stringify(workout_row));
 		
-		delete_from_localStorage("workoutData");
-		add_to_localStorage("workoutData", JSON.stringify(workoutData));
 		
 		
 		
@@ -880,7 +877,7 @@ function initCounters(){
 function resetCourierData(){
     courierData = {
         "address": "000000000000",
-        "devicetype": "T",
+        "devicetype": "D",
         "flag": "",
         "uom": 0,
         "steps": 0,
