@@ -94,7 +94,12 @@ function doLoad(env){
 	getAppLanguage(function(){
 		//system language
 		try {
-			currLang = air.Capabilities.language;
+			currLang = air.Capabilities.language ? air.Capabilities.language : "en";
+			
+			//if we do not have a translation for their current language, default to english
+			if (typeof appLang[currLang]["msg_treadmill_connect"] === "undefined") {
+                currLang = "en";
+            }
 			
 			//if they ever change language it is set in local storage... retrieve it
 			var setLang = get_from_localStorage('appLang');
@@ -250,7 +255,8 @@ function assignEventHandlers(env){
         
     });//END $('#signin').click(function(){
     
-    $('.close_app').click(function(){
+    $('.close_app').live("click", function(){
+		//alert("close");
 		doSignOut();
     });
     $('#exit').live("click", function(){
@@ -392,10 +398,17 @@ function keypressHandler(event){
             e.preventDefault();
             return false;*/
         }
-		if (e.which == 67) { //control+c
+		if (e.which == 67) { //shift+c
             air.trace("toggle console");
             
 			$("#console").toggle();
+              
+        }
+		if (e.which == 76) { //shirt+l
+            air.trace("manually delete known address from local storage");
+            delete_from_localStorage('known_address');
+			
+            //$("#console").toggle();
               
         }
         /*if (e.which == 49) { //#1
@@ -566,7 +579,7 @@ function initCourier(){
 		air.trace("native process supported");
 		$("#console").append("<br/> native process is supported");
 		
-		var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
+		var np_file = air.File.applicationDirectory.resolvePath("Courier2.jar");
 		
 		var _address = get_from_localStorage("known_address");
 		if (_address == null) {
@@ -578,33 +591,41 @@ function initCourier(){
 		
 		var processArgs = new air.Vector["<String>"]();
 		processArgs.push("-jar");
-		processArgs.push("-d32"); //FORCE 32bit mode
+		//processArgs.push("-d32"); //FORCE 32bit mode
 		processArgs.push(np_file.nativePath);
 		
 		processArgs.push(_address.fulltrim()); //known address from local storage
 		processArgs.push(user_weight); //known user weight
 		processArgs.push(device_names); //"ENDEX,LifeSpan" NO SPACES IN FILE NAME
+		//processArgs.push("IHP");
 		
-		var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
-		nativeProcessStartupInfo.executable = java_file;
-		nativeProcessStartupInfo.arguments = processArgs;
-		
-		air.trace("args: ", processArgs);
-		$("#console").append("<br/> args: "+ processArgs );
 		
 		try {
-			nativeProcess.start(nativeProcessStartupInfo);
+                var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+                nativeProcessStartupInfo.executable = java_file;
+	            nativeProcessStartupInfo.arguments = processArgs;
+	        
+	            air.trace("args: ", processArgs);
+	        
+		        $("#console").append("<br/> args: "+ processArgs );
+				
+			    nativeProcess.start(nativeProcessStartupInfo);
+				nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
+		        nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
+		        nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
+		        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
+		        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
+				
 		} 
 		catch (e) {
 			air.trace("try np start:", e.message);
 			$("#console").append("<br/> try np start: "+ e.message );
+			alert("catch np start try error. Please contact the administrator. Your version of java is incompatible: Go here to DOWNLOAD/INSTRUCTIONS. NEED COPY & DESIGN! & Translations");
+			
+			showDisconnected();
 		}
 		
-		nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
-		nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
-		nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
-		nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
-		nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
+		
 		
 		//sendCourierMessage("searchDevices\n");
 	
@@ -641,16 +662,18 @@ function onOutputData()
 		
 		BTCONNECTED = true;
 		showConnected();
-		air.trace("GOT CONNECT FROM COURIER");
-		$("#console").append("<br/> GOT CONNECT FROM COURIER");
+		air.trace("GOT CONNECT FROM COURIER", msg);
+		$("#console").append("<br/> GOT CONNECT FROM COURIER"+msg);
+		
+		//WRITE ADDRESS TO LOCAL STORAGE
+        var device_address = msg.split("|")[1];
+        add_to_localStorage('known_address', device_address);
 		
 		
 		//START PROCESS_COURIERDATA 20 SEC TIMER
 		initWorkoutData();
 		processDataInterval = setInterval(processCourierData, 20000);
 		
-		//WRITE ADDRESS TO LOCAL STORAGE
-        add_to_localStorage('known_address', msg.split("|")[1].fulltrim());
 		
 	}
 	else if (msg.indexOf("BTOFF") !== -1) {
@@ -1210,13 +1233,13 @@ function getAppLanguage(callback){
 	
 	//getDataFrom(LANGUAGE_FILE, "", function(response){
 	//   appLang = JSON.parse(response);
+	//ADD AVAILABLE LANGUAGES TO SETTINGS DROPDOWN MENU
 		for (prop in appLang) {
 			if (appLang[prop]['language']) {
 				$(".langs").append('<a class="translate" rel="' + prop.toString() + '" href="#' + prop.toString() + '">' + appLang[prop]['language'] + '</a>');
 				air.trace('<a class="translate" rel="' + prop.toString() + '" href="#' + prop.toString() + '">' + appLang[prop]['language'] + '</a>');
 			}
 	    }
-	   
 	   callback.call();
 	//});
 }
