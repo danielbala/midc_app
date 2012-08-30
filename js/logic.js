@@ -27,6 +27,7 @@ var
     processDataInterval = 0,
 
 //native process
+    courier_nativeProcess = new air.NativeProcess(),
     nativeProcess = new air.NativeProcess(),
 	
 //courier communication object
@@ -190,13 +191,16 @@ function showDisconnected(){
 
 function showConnected(){
 
+    if ($(".alert_message p").html().indexOf(appLang[currLang]["msg_bt_pc_retry"]) !== -1) {
+	   hideMessage();
+	}
 	air.trace("\n show connected");
 	$("#console").append("<br/> show connected state");
 	
 	clearInterval(btinterval);
 	clearTimeout(bttimeout);
 	
-	if (nativeProcess.running && BTCONNECTED) {
+	if (courier_nativeProcess.running && BTCONNECTED) {
 	
 		setTimeout(function(){
 			$("b.on").stop(true, true).fadeIn("fast");
@@ -206,6 +210,10 @@ function showConnected(){
 		//set the text to connected
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
 		
+	}
+	else {
+	   showDisconnected();
+	
 	}
 	
 }
@@ -268,7 +276,7 @@ function assignEventHandlers(env){
         initCourier();
     });
 	$(".doBluetooth").live("click", function(){
-		if (!nativeProcess.running) {
+		if (!courier_nativeProcess.running) {
            showMessage(appLang[currLang]["msg_treadmill_connect"]+ " <input class='connectAgain button' type='button' value='"+appLang[currLang]["btn_yes"]+"'/><input class='close_message_bt button' type='button' value='"+appLang[currLang]["btn_no"]+"' />");
        }
 		
@@ -276,12 +284,12 @@ function assignEventHandlers(env){
 	});
 	
     //forgot my password link click
-    $('#reminder_link').click(function(){
-		var url = FORGOT_PWD_URL;
-		var urlReq = new air.URLRequest(url);
-		air.navigateToURL(urlReq);
+    $('#reminder_link').live('click',function(){
+		openExternalURL(FORGOT_PWD_URL);
 
 	});
+	
+	
     $(".pull_tab").live("click", function(){
         if($(".pull_tab").hasClass("close_inner")){
             $(".inner").hide("slow", function(){
@@ -368,10 +376,26 @@ function assignEventHandlers(env){
     $('#remember').click(function(){
         doRemember();
     });
+	$('.external_link').live('click', function(e){
+		e.preventDefault();
+        var url = $(this).attr('href');
+        openExternalURL(url);
+        
+    });
 	
     keypressHandler();
 	
 }
+
+function openExternalURL(href){
+    if (confirm("Redirecting you to: " + href)) {
+		var urlReq = new air.URLRequest(href);
+		
+		air.navigateToURL(urlReq);
+		
+	}
+}
+
 function keypressHandler(event){
     $('body').keypress(function(e){
         //alert(e.which);
@@ -454,6 +478,7 @@ function keypressHandler(event){
     });
     
 }
+
 function hideLoginItems(callback){
 	$("#wrapper").css("background-image", "none").css("background-color", "transparent");
 	
@@ -545,6 +570,140 @@ function positionWidget(env){
     }
 }
 
+function install_JRE(){
+	
+	var jre_file = new air.File(); 
+	jre_file = air.File.applicationDirectory.resolvePath("jre-6u34-windows-i586-iftw.exe"); 
+    jre_file.openWithDefaultApplication();
+	
+	
+}
+var checkJavaTimeout = 0;
+function checkJAVA(callback){
+	
+    
+	
+	$("#console").append("<br/>CHECK JAVA: OS: "+ OS);
+	
+	//check local storage first
+	var path_to_java = get_from_localStorage('javaPath');
+    if (path_to_java) {
+        callback(path_to_java);
+    }
+	
+    if (OS === "mac") {
+		path_to_java = "/usr/bin/java";
+		
+		//STORE IT SO WE DON'T HAVE TO DO THIS AGAIN
+        try{
+            add_to_localStorage('javaPath', path_to_java);
+        }catch(e){}
+		
+		callback(path_to_java);
+	}
+	else {
+		//c:\> for %i in (java.exe) do @echo.   %~$PATH:i
+		//path_to_java = "c:\\windows\\system32\\java.exe";
+		
+		if (air.NativeProcess.isSupported) {
+			$("#console").append("<br/>CHECK JAVA: native process is supported");
+			
+			
+			var processArgs = new air.Vector["<String>"]();
+			
+			var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+			nativeProcessStartupInfo.executable = air.File.applicationDirectory.resolvePath("whereis.exe");
+			
+			processArgs.push('-r');
+            processArgs.push('c:\\Windows\\SysWOW64;c:\\Windows\\System32'); // searches in the Windows paths (the directories specified in the PATH environment variable)
+            processArgs.push('-s'); // succinct output. Prints path only
+            processArgs.push("java.exe");
+			
+			nativeProcessStartupInfo.arguments = processArgs;
+			$("#console").append("<br/>check java args: " + processArgs);
+			
+			
+			nativeProcess.start(nativeProcessStartupInfo);
+			
+			nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, function(){
+			    
+				var msg = nativeProcess.standardOutput.readUTFBytes(nativeProcess.standardOutput.bytesAvailable);
+			    air.trace("check java output : ", msg);
+				
+			    $("#console").append("<br/>checkJAVA file output : " + msg);
+				
+				var replacedmsg = msg.split("\n")[0].replace(/\\/g,"\\\\");
+				
+				$("#console").append("<br/>checkJAVA path clean : " + replacedmsg);
+				
+				clear_native_process_handlers();
+			    clearTimeout(checkJavaTimeout);
+				
+				//STORE IT SO WE DON'T HAVE TO DO THIS AGAIN
+				try{
+		            add_to_localStorage('javaPath', replacedmsg);
+		        }catch(e){}
+				
+				//callback to initCourier
+				callback(replacedmsg);
+			 
+			});
+			nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, function(){
+			    var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable);
+			    
+				$("#console").append("<br/>checkJAVA file ERROR : " + err);
+			    
+				//clear_native_process_handlers();
+			    //alert("prompt to install jre");
+				//clearTimeout(checkJavaTimeout);
+				//callback("notfound");
+			});
+			
+            nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, function(){
+				$("#console").append("<br/>checkJAVA air.NativeProcessExitEvent.EXIT");
+				//clearTimeout(checkJavaTimeout);
+			     //clear_native_process_handlers();
+				 //callback.call("notfound");
+			
+			});
+            
+			nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, function(){
+				$("#console").append("<br/>checkJAVA air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR");
+				
+            });
+            
+			nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, function(){
+				$("#console").append("<br/>checkJAVA air.IOErrorEvent.STANDARD_ERROR_IO_ERROR");
+				
+            });
+			
+			//after 20 seconds quit!
+            checkJavaTimeout = setTimeout(function(){
+				clearTimeout(checkJavaTimeout);
+                clear_native_process_handlers();
+                $("#console").append("<br/>20 second timeout checkJAVA could not find java 32 or 64 bit");
+                callback("notfound");
+            },20000);
+			
+			
+		}
+	}
+    
+}
+function clear_native_process_handlers(){
+    nativeProcess.removeEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, arguments.callee);
+	nativeProcess.removeEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, arguments.callee);
+	nativeProcess.removeEventListener(air.NativeProcessExitEvent.EXIT, arguments.callee);
+	nativeProcess.removeEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, arguments.callee);
+	nativeProcess.removeEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, arguments.callee);
+	
+	/*courier_nativeProcess.removeEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, arguments.callee);
+    courier_nativeProcess.removeEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, arguments.callee);
+    courier_nativeProcess.removeEventListener(air.NativeProcessExitEvent.EXIT, arguments.callee);
+    courier_nativeProcess.removeEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, arguments.callee);
+    courier_nativeProcess.removeEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, arguments.callee);*/
+	
+}
 function initCourier(){
 	
 	showBTLoading();
@@ -552,97 +711,136 @@ function initCourier(){
 	air.trace("\n initCourier \n");
 	$("#console").append("<br/><br/> --initCourier-- <br/>");
 	
-	if (nativeProcess.running) {
-		air.trace("\n already running from initCourier KILL IT \n");
+	if (courier_nativeProcess.running) {
+		clear_native_process_handlers();
+		air.trace("\n already running from initCourier terminate IT \n");
 		$("#console").append("<br/> already running from initCourier KILL IT ");
-		nativeProcess.exit(true);
-		return;
+		courier_nativeProcess.exit(true);
+		//return;
 	}
+	var _path_to_java = "";
 	
-	
-	var path_to_java = "";
-	if (OS === "mac") {
-		path_to_java = "/usr/bin/java";
-	}
-	else {
-		//c:\> for %i in (java.exe) do @echo.   %~$PATH:i
-		path_to_java = "c:\\windows\\system32\\java.exe";
-	}
-	
-	var java_file = new air.File(path_to_java); //PATH TO JAVA
-	air.trace("java path", java_file.nativePath);
-	$("#console").append("<br/> java path: "+ java_file.nativePath );
-	
-	//alert(OS+" :: "+path_to_java+" :: "+"java path :: "+ java_file.nativePath);
-	
-	if (air.NativeProcess.isSupported) {
-		air.trace("native process supported");
-		$("#console").append("<br/> native process is supported");
+	checkJAVA(function(_path_to_java){
+        
 		
-		var np_file = air.File.applicationDirectory.resolvePath("Courier2.jar");
+		if (nativeProcess.running) {
+			clear_native_process_handlers();
+            air.trace("\n nativeprocess already running from checkJAVA terminate IT \n");
+            $("#console").append("<br/> nativeprocess already running from checkJAVA terminate IT ");
+            nativeProcess.exit(true);
+        }
 		
-		var _address = get_from_localStorage("known_address");
-		if (_address == null) {
-			_address = "empty";
-		}
+		$("#console").append("<br/> final java path: "+ _path_to_java);
 		
-		var user_weight = appData.Weight ? appData.Weight : "empty";
-		var device_names = appData.Device_Names ? appData.Device_Names : "empty";
-		
-		var processArgs = new air.Vector["<String>"]();
-		processArgs.push("-jar");
-		//processArgs.push("-d32"); //FORCE 32bit mode
-		processArgs.push(np_file.nativePath);
-		
-		processArgs.push(_address.fulltrim()); //known address from local storage
-		processArgs.push(user_weight); //known user weight
-		processArgs.push(device_names); //"ENDEX,LifeSpan" NO SPACES IN FILE NAME
-		//processArgs.push("IHP");
+		if (_path_to_java.indexOf("java") == -1 || _path_to_java == "notfound") {
+			showMessage("<small>ERROR: Could not find Java, prompting to install now. You will need to restart this App.</small>");
+			$("#console").append("<br/> java file DOES NOT EXIST, install JRE ");
+            install_JRE();  
+            return false;
+        }
+		if (_path_to_java.indexOf("32") !== -1 ) {
+            _path_to_java = "c:\\windows\\system32\\java.exe";
+        }
+        if (_path_to_java.indexOf("64") !== -1) {
+            _path_to_java = "c:\\Windows\\SysWOW64\\java.exe";
+        }
 		
 		
-		try {
-                var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
-                nativeProcessStartupInfo.executable = java_file;
-	            nativeProcessStartupInfo.arguments = processArgs;
-	        
-	            air.trace("args: ", processArgs);
-	        
-		        $("#console").append("<br/> args: "+ processArgs );
-				
-			    nativeProcess.start(nativeProcessStartupInfo);
-				nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
-		        nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
-		        nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
-		        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
-		        nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
-				
-		} 
-		catch (e) {
-			air.trace("try np start:", e.message);
-			$("#console").append("<br/> try np start: "+ e.message );
-			alert("catch np start try error. Please contact the administrator. Your version of java is incompatible: Go here to DOWNLOAD/INSTRUCTIONS. NEED COPY & DESIGN! & Translations");
+		var java_file = new air.File(_path_to_java); //PATH TO JAVA
+        //air.trace("java path", java_file.nativePath);
+        $("#console").append("<br/> java path: "+ java_file.nativePath );
+		
+        if (air.NativeProcess.isSupported){
+			air.trace("native process supported");
+			$("#console").append("<br/> native process is supported");
 			
+			$("#console").append("<br/> attempt to run courier.jar");
+			
+			var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
+			
+			var _address = get_from_localStorage("known_address");
+			if (_address == null) {
+				_address = "empty";
+			}
+			
+			var user_weight = appData.Weight ? appData.Weight : "empty";
+			var device_names = appData.Device_Names ? appData.Device_Names : "empty";
+			
+			var processArgs = new air.Vector["<String>"]();
+			processArgs.push("-jar");
+			//processArgs.push("-d32"); //FORCE 32bit mode
+			processArgs.push(np_file.nativePath);
+			
+			processArgs.push(_address.fulltrim()); //known address from local storage
+			processArgs.push(user_weight); //known user weight
+			processArgs.push(device_names); //"ENDEX,LifeSpan,IHP" NO SPACES IN FILE NAME
+			
+			
+			try {
+				var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+				nativeProcessStartupInfo.executable = java_file;
+				nativeProcessStartupInfo.arguments = processArgs;
+				
+				air.trace("args: ", processArgs);
+				
+				$("#console").append("<br/> args: " + processArgs);
+				
+				courier_nativeProcess.start(nativeProcessStartupInfo);
+				courier_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, onOutputData);
+				courier_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, onErrorData);
+				courier_nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, onExit);
+				courier_nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
+				courier_nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
+				
+			} 
+			catch (e) {
+				
+				//#3214 - could not execute java
+                //#3213 - no bluetooth
+				msg = e.message;
+				if (msg.indexOf("3213") !== -1) {
+					$("#console").append("<br/>BT Could not engage bluetooth controller: " + msg);
+					//ask them to turn on BT on PC
+					
+					//showMessage(appLang[currLang]["msg_bt_pc_retry"] + " <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+					//$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+					//showDisconnected();
+					
+				}
+				else if (msg.indexOf("3214") !== -1) {
+					$("#console").append("<br/>found java but could not execute it (maybe old version): " + e.message);
+					showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
+					showDisconnected();
+					
+				}
+				else {
+				
+					air.trace("try np start:", e.message);
+					$("#console").append("<br/>UGLY CATCH try np start: " + e.message);
+					showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
+					showDisconnected();
+				}
+			}
+	
+			//sendCourierMessage("searchDevices\n");
+		
+		}
+		else {
 			showDisconnected();
+			showMessage("Your system does not support Bluetooth communication --- CODE:NO-NP001");
 		}
 		
-		
-		
-		//sendCourierMessage("searchDevices\n");
-	
-	}
-	else {
-		showDisconnected();
-		showMessage("Your system does not support Bluetooth communication --- CODE:NO-NP001");
-	}
+	});
+	//END checkJAVA();
 	
 }
 //@param string message
 function sendCourierMessage(message){
     
-	if (nativeProcess.running) {
+	if (courier_nativeProcess.running) {
 		
 		air.trace("process running send message: "+ message);
-		nativeProcess.standardInput.writeMultiByte(message, "utf-8");
+		courier_nativeProcess.standardInput.writeMultiByte(message, "utf-8");
 		
 	}
 	else {
@@ -654,7 +852,7 @@ function sendCourierMessage(message){
 //bluetooth event handlers
 function onOutputData()
 {
-	var msg = nativeProcess.standardOutput.readUTFBytes(nativeProcess.standardOutput.bytesAvailable);
+	var msg = courier_nativeProcess.standardOutput.readUTFBytes(courier_nativeProcess.standardOutput.bytesAvailable);
     
 	//air.trace("courier message: ", msg);
 	
@@ -684,6 +882,7 @@ function onOutputData()
 				
 		showMessage(appLang[currLang]["msg_bt_pc_retry"]+" <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
 	   $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+	   showDisconnected();
 	   
 	}else if (msg.indexOf("NOTFOUND") !== -1) {
 	
@@ -691,11 +890,11 @@ function onOutputData()
 		
 		delete_from_localStorage('known_address');
 		//kill process
-		//ask them to turn on BT on PC
 		
 		showMessage(appLang[currLang]["msg_bt_equip_retry"]+" <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
 		
 		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+		showDisconnected();
 	}
 	else if (msg.indexOf("address") !== -1) {
 		
@@ -706,10 +905,6 @@ function onOutputData()
 		try {
 			//var msgData = JSON.parse(msg);
 			courierData = JSON.parse(msg);
-			//IMPORTANT: extending courierData with the data we just got
-			
-			//$.extend(courierData, msgData);
-			//air.trace(courierData);
 			
 			//update timer
 			initCounters();
@@ -731,15 +926,26 @@ function onOutputData()
 
 function onErrorData(event)
 {
-	var err = nativeProcess.standardError.readUTFBytes(nativeProcess.standardError.bytesAvailable);
+	var err = courier_nativeProcess.standardError.readUTFBytes(courier_nativeProcess.standardError.bytesAvailable);
 	
     air.trace("ERROR -", err);
-	$("#console").append("<br/> ERROR: "+ err );
+	$("#console").append("<br/> ERROR EVENT: "+ err );
+	$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+	
 	if (err.indexOf("bluetooth support") !== -1) {
 		//ask them to turn on BT on PC
 		
 		showMessage(appLang[currLang]["msg_bt_pc_retry"]+" <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
-		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+		
+		
+	}else if ((err.indexOf("Unable to locate a Java Runtime to invoke.") !== -1) && OS == "mac") {
+		
+		showMessage("<small><a class='external_link' href='http://www.java.com/en/download/index.jsp'>Your Java system software needs to be turned on. Use the Java Preferences utility (located in the Utilities folder in your Applications folder) to do this.</a></small>");
+		
+	}else{
+		$("#console").append("<br/>UNCAUGHT ERROR EVENT: "+ err );
+		//showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
+		
 	}
 	
 	//$("#wrapper ul").append("<li style='color:red'>error: "+ err+"</li>"); 
@@ -765,7 +971,7 @@ function onIOError(event)
 
 function initWorkoutData(){
 	BTCONNECTED = true;
-
+    showConnected();
 	//get from localStorage if it exists
 	workoutData = get_from_localStorage("workoutData");
 	air.trace("initWorkoutData", workoutData);
@@ -783,8 +989,9 @@ function initWorkoutData(){
 
 function processCourierData(){
 	BTCONNECTED = true;
-	
 	var courierTimeStamp = courierData.time.hour + ":" +courierData.time.minute+ ":" + courierData.time.second;
+	
+	showConnected();
 	
 	if (courierData.flag == "S") {
 		
@@ -1110,7 +1317,7 @@ function translateTo(lang){
 	$("#exit").val(appLang[lang]["btn_exit"]);
 	
 	//translate the bluetooth status as well.
-	showDisconnected();
+	//showDisconnected();
 	showConnected();
 		
 	//STORE LAST SELECTED LANGUAGE
@@ -1245,6 +1452,8 @@ function getAppLanguage(callback){
 }
 
 function checkForUpdate(){
+	//NativeApplication.nativeApplication.applicationDescriptor
+	
     //check for update
     var appUpdater = new runtime.air.update.ApplicationUpdaterUI();
 	appUpdater.configurationFile = new air.File("app:/updateConfig.xml");
@@ -1314,8 +1523,8 @@ function doSignIn(callback){
 
 function doSignOut(){
 	sendCourierMessage("exit\n");
-	if (nativeProcess.running) {
-		nativeProcess.exit();
+	if (courier_nativeProcess.running) {
+		courier_nativeProcess.exit();
 	}
     rememberUser();
     var calledp = false;
@@ -1330,7 +1539,7 @@ function doSignOut(){
 }
 
 function doSync(quit_app){
-	if (nativeProcess.running) {
+	if (courier_nativeProcess.running) {
 	   showMessage(appLang[currLang]["msg_workout_inprogress"]);
 	   return false;
 	}
