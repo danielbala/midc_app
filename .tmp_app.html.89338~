@@ -9,7 +9,8 @@
         
 		<script type="text/javascript" src="lib/air/AIRAliases.js"></script>
 		<script type="text/javascript" src="lib/air/AIRIntrospector.js"></script>
-		<!--script type="application/x-shockwave-flash" src="lib/air/NativeApplicationUpdater-0.5.1.swf"/>-->
+		<script type="application/x-shockwave-flash" src="lib/air/applicationUpdater.swf"/>
+		<script type="application/x-shockwave-flash" src="lib/air/applicationupdater_ui.swf"/>
 		<script type="application/x-shockwave-flash" src="lib/air/aircore.swf"/>
 		
 		<!-- Counter script -->
@@ -64,8 +65,8 @@
                         <span class="lbl_intro">Use to view your treadmill desk results in real time on your computer.</span>
                     </div>
                 </div>
-                <div id="footer" class="versiontxt">
-                    
+                <div id="footer">
+                    0.1.8
                 </div>
             </div>
             <!--END #login_items -->
@@ -114,7 +115,7 @@
                                                     </p>
 													<hr/>
                                                     <p>
-                                                        <em>version: <span class="versiontxt"></span> b</em>
+                                                        <em>version: 0.1.8 b</em>
                                                         
                                                     </p>
                                                 </div>
