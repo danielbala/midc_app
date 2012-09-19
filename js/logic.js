@@ -1013,38 +1013,53 @@ function initWorkoutData(){
     
     
 }
-
+var previous_pause = false;
 function processCourierData(){
     BTCONNECTED = true;
     var courierTimeStamp = courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second;
     
-    //showConnected();
-    
+    var temp_workout_row = {
+        "patientid": ID_NUMBER,
+        "datestamp": today_date,
+        "timestamp": courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second,
+        "equip": "D", //courierData.devicetype
+        "hr": courierData.time.hour,
+        "cal": courierData.calories,
+        "steps": courierData.steps,
+        "speed": courierData.speed.whole + "." + courierData.speed.fraction,
+        "dist": courierData.distance.whole + "." + courierData.distance.fraction,
+        "watt": "",
+        "flag": courierData.flag,
+        "displayunits": courierData.uom ? "E" : "M", //machine reports 0=metric or 1=imperial,
+        "extrafield": ""
+    };
+	
+	
+	if (courierData.flag == "P" && previous_pause == false) {
+	   //write the first pause
+	   //add to storage
+       workoutData.push(temp_workout_row);
+       delete_from_localStorage("workoutData");
+       add_to_localStorage("workoutData", JSON.stringify(workoutData));
+	   previous_pause = true;
+	   
+	}
+	
     if (courierData.flag == "S") {
     
         showMessage(appLang[currLang]["msg_workout_ended"]);
         clearInterval(processDataInterval);
-        
+        //add to storage
+		workoutData.push(temp_workout_row);
+		delete_from_localStorage("workoutData");
+        add_to_localStorage("workoutData", JSON.stringify(workoutData));
+		
     }
     else {
         //workout_row.flag = courierData.flag;
         if (courierData.flag !== "P" && courierData.steps !== -1) {
-        
-            var temp_workout_row = {
-                "patientid": ID_NUMBER,
-                "datestamp": today_date,
-                "timestamp": courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second,
-                "equip": "D", //courierData.devicetype
-                "hr": courierData.time.hour,
-                "cal": courierData.calories,
-                "steps": courierData.steps,
-                "speed": courierData.speed.whole + "." + courierData.speed.fraction,
-                "dist": courierData.distance.whole + "." + courierData.distance.fraction,
-                "watt": "",
-                "flag": courierData.flag,
-                "displayunits": courierData.uom ? "E" : "M", //machine reports 0=metric or 1=imperial,
-                "extrafield": ""
-            }
+            previous_pause = false;
+            
             workoutData.push(temp_workout_row);
             
             air.trace("\n processCourierData: workout_row:", JSON.stringify(temp_workout_row));
@@ -1093,23 +1108,50 @@ function initCounters(){
             auto: false,
             precision: 2
         });
-        // Initialize Time Seconds counter
-        timeSecCounter = new flipCounter('timeSecflip-counter', {
-            value: courierData.time.second,
-            inc: 1,
-            pace: 1000,
-            auto: false,
-            precision: 2,
-            maxCount: 60
-        });
-        // Initialize Time Minute counter
-        timeMinCounter = new flipCounter('timeMinflip-counter', {
-            value: courierData.time.minute,
-            inc: 1,
-            pace: 62000,
-            auto: false,
-            precision: 2
-        });
+		if (courierData.time.hour >= 1) {
+			// Initialize Time Seconds counter
+			timeSecCounter = new flipCounter('timeSecflip-counter', {
+				value: courierData.time.minute,
+				inc: 1,
+				pace: 1000,
+				auto: false,
+				precision: 2,
+				maxCount: 60
+			});
+			// Initialize Time Minute counter
+			timeMinCounter = new flipCounter('timeMinflip-counter', {
+				value: courierData.time.hour,
+				inc: 0,
+				pace: 0,
+				auto: false,
+				precision: 2
+			});
+			
+		}
+		else {
+			// Initialize Time Seconds counter
+			timeSecCounter = new flipCounter('timeSecflip-counter', {
+				value: courierData.time.second,
+				//inc: 1,
+				inc: 0,
+				pace: 1000,
+				auto: false,
+				precision: 2,
+				maxCount: 60
+			});
+			// Initialize Time Minute counter
+			timeMinCounter = new flipCounter('timeMinflip-counter', {
+				value: courierData.time.minute,
+				//inc: 1,
+				inc: 0,
+				//pace: 62000,
+				pace: 0,
+				auto: false,
+				precision: 2
+			});
+			
+		}
+        
     }
 }
 
@@ -1526,7 +1568,7 @@ function doSync(quit_app){
             var data = "workoutdata=" + get_from_localStorage("workoutData");
             
             getDataFrom(IHPPROCESS_URL + ID_NUMBER, data, function(response){
-            
+                
                 air.trace("response from process: ", response);
                 $("#console").append("<br/> sync response from server: " + response);
                 
@@ -1534,7 +1576,7 @@ function doSync(quit_app){
                 resetCourierData();
                 
                 SYNC_ATTEMPTED = true;
-                
+                hideMessage();
                 //SYNC SUCCESSFULL?
                 
                 if (quit_app) {
@@ -1543,7 +1585,7 @@ function doSync(quit_app){
                 
             });
             
-            hideMessage();
+            
             
         }, 1000);
         

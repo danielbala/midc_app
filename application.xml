@@ -32,7 +32,7 @@
     <versionLabel>0.2.0 beta</versionLabel>
 	
 	<!-- Description, displayed in the AIR application installer. Optional. -->
-	<description>Treadmill Desk Companion App. Point to correct process.asp file. Language debugging.</description>
+	<description>Treadmill Desk Companion App. Point to correct process.asp file. Language fix. 59:59 fix.</description>
 	<!--<publisherID>8F9216641BAF5920B5A7B4C198556E7E71B1FC0F.1</publisherID>-->
 	<!-- Copyright information. Optional -->
 	<copyright/>
