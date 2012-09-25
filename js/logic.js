@@ -141,7 +141,8 @@ function doLoad(env){
             
             //if they ever change language it is set in local storage... retrieve it
             var setLang = get_from_localStorage('appLang');
-            if (setLang) {
+            
+			if (setLang) {
                 currLang = setLang;
             }
         } 
@@ -450,59 +451,29 @@ function keypressHandler(event){
             $('#signin').click();
             
         }
-        if (e.which == 67) { //shift+c
+		
+		var key = String.fromCharCode(e.which);
+		var alt = e.altKey;
+		var ctrl = e.ctrlKey
+		var shift = e.shiftKey;
+		//alert("Key:" + key + "\nAlt:" + alt + "\nCtrl:" + ctrl + "\nShift:" + shift);
+		
+		if(e.ctrlKey && e.shiftKey && (key == 'C')){
+        /*if (e.which == 67) { //shift+c*/
             air.trace("toggle console");
             
             $("#console").toggle();
             
         }
-        if (e.which == 76) { //shirt+l
+		if(e.ctrlKey && e.shiftKey && (key == 'L')){
+        /*if (e.which == 76) { //shirt+l*/
             air.trace("manually delete known address from local storage");
             delete_from_localStorage('known_address');
             delete_from_localStorage('javaPath');
             
-            //$("#console").toggle();
         
         }
-        /*if (e.which == 49) { //#1
-         //air.trace("ONE");
-         
-         courierData.steps++;
-         courierData.calories++;
-         courierData.distance.whole++;
-         courierData.distance.fraction +=2;
-         courierData.time.second += 10;
-         courierData.time.minute++;
-         //courierData.time.hour++;
-         
-         mock_onOutputData(JSON.stringify(courierData));
-         
-         }
-         if (e.which == 50) { //#2
-         //set stop flah
-         courierData.flag = "S";
-         
-         mock_onOutputData(JSON.stringify(courierData));
-         
-         }
-         if (e.which == 112) { //p
-         if ($('#signin').is(':visible')) {
-         
-         }else{
-         stepsCounter.setAuto(false);
-         timeSecCounter.setAuto(false);
-         timeMinCounter.setAuto(false);
-         }
-         }
-         if (e.which == 114) { //r
-         if ($('#signin').is(':visible')) {
-         
-         }else{
-         stepsCounter.setAuto(true);
-         timeSecCounter.setAuto(true);
-         timeMinCounter.setAuto(true);
-         }
-         }*/
+        
     });
     
 }
@@ -1431,12 +1402,31 @@ function getAppDescriptor(callback){
 		if (APP_VERSION !== newAppVersion) {
 			$("#console").append("<br/> APP VERSIONS OUT OF SYNC, PROMPT TO UPDATE: " + newAppVersion);
 			
-			if (confirm("New version (" + newAppVersion + ") is available. Would You Like to Download and Install it?")) {
-				do_update(appDesc.appVersion[OS], callback);
+			$("#login_items").hide();
+			$("#wrapper").fadeIn("slow", function(){
+				$("#update_prompt").prepend("<p>New version (" + newAppVersion + ") is available. Would you like to download and install it?</p>").fadeIn("fast");
+				
+				$("#update_no").click(function(){
+					
+					$("#update_prompt").hide();
+					$("#login_items").fadeIn("fast");
+                    callback.call();
+				});
+				$("#update_yes").click(function(){
+					do_update(appDesc.appVersion[OS]);
+					
+					$("#update_prompt").html('<img src="icons/loading.gif" alt="loading" width="43" height="11" />');
+				});
+				
+			});
+			
+			
+			/*if (confirm("New version (" + newAppVersion + ") is available. Would you like to download and install it?")) {
+				do_update(appDesc.appVersion[OS]);
 			}
 			else {
 				callback.call();
-			}
+			}*/
 		}
 		else {
 		
@@ -1444,7 +1434,7 @@ function getAppDescriptor(callback){
 		}
     });
 }
-function do_update(downloadurl, callback){
+function do_update(downloadurl){
 	
     air.trace("starting app update:", downloadurl);
 	
@@ -1453,10 +1443,7 @@ function do_update(downloadurl, callback){
 	air.navigateToURL( new air.URLRequest(downloadurl) );
     
 	setTimeout(function(){air.NativeApplication.nativeApplication.exit();},3000);
-	
-	
-	//PUTBACK
-    //callback.call();    
+	  
 }
 
 

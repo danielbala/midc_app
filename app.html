@@ -22,8 +22,13 @@
 		
 	</head>
 	<body onload="doLoad('app');">
-        <div id="wrapper">
-            <!-- login_items -->
+		<div id="wrapper">
+            <div id="update_prompt" style="display:none;padding:5px;text-align:center;margin:0 auto;padding-top:100px;">
+            
+                <input id="update_no" type="button" value="Not Now" class="button" />
+                <input id="update_yes" type="button" value="Update" class="button" />
+            </div>
+			<!-- login_items -->
             <div id="login_items">
                 <div>
                     <span class="lbl_lastname inputlbl" for="username">

@@ -24,15 +24,15 @@
 	<name>Treadmill Desk</name>
 
 	<!-- An application version designator (such as "v1", "2.5", or "Alpha 1"). Required. -->
-	<versionNumber>0.2.0</versionNumber>
+	<versionNumber>0.2.2</versionNumber>
 	
 	<supportedProfiles>extendedDesktop desktop</supportedProfiles>
 
     <!-- A string value (such as "v1", "2.5", or "Alpha 1") that represents the version of the application, as it should be shown to users. Optional. -->
-    <versionLabel>0.2.0 beta</versionLabel>
+    <versionLabel>0.2.2 beta</versionLabel>
 	
 	<!-- Description, displayed in the AIR application installer. Optional. -->
-	<description>Treadmill Desk Companion App. Point to correct process.asp file. Language fix. 59:59 fix.</description>
+	<description>Treadmill Desk Companion App. Ctrl+Shift+ C or L keycombo fix. missing pause and stop fix.</description>
 	<!--<publisherID>8F9216641BAF5920B5A7B4C198556E7E71B1FC0F.1</publisherID>-->
 	<!-- Copyright information. Optional -->
 	<copyright/>

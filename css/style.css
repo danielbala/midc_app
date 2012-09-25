@@ -33,7 +33,7 @@ left: 345px;
 text-align: right;
 color: #CCC;
 }
-div#login_items{
+div#login_items, div#update_prompt{
 	background: transparent url('images/bg/fade2.png') no-repeat 0 0;
 	width: 404px;
 	height: 380px;
@@ -173,6 +173,9 @@ ul{
 		.settings_menu em{
             font-size: 14px;
         }
+		a.translate{
+			font-size:12px;
+		}
 	
 	#main ul.sections li.inner li.drop_tab{
 		/*height:25px;*/
