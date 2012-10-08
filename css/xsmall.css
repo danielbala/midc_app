@@ -1,0 +1,130 @@
+div.timer{
+	padding-top: 3px;
+	position: relative;
+	left: 60px;
+	height: 30px;
+	font-weight: bold;
+}
+
+div.timer ul{
+	list-style-type: none;
+	color: #333;
+	position: relative;
+	left: -110px;
+	width: 120px;
+}
+div.timer ul li{
+	float:right;
+	margin:0 2px;
+}
+div.timer .digit-separator{
+	line-height: 30px;
+	font-size: 28px;
+	color:#000;
+	display:none;
+}
+
+
+div.timer li.digit .digit-wrap{
+	/* Bulk of customizing happens here */
+	width: 18px;
+	height: 30px;
+	line-height: 30px;
+	font-size: 28px;
+	background:#fff;
+	text-align: center;
+	position: relative;
+	display: inline-block;
+	/* Perspective for 3d transform, play with this to get more exaggerated flip */
+	-webkit-perspective: 100;
+	/* Including all vendor prefixes so it at least looks nice even if it doesn't animate */
+	box-shadow: 1px 1px 2px 0px rgba(0, 0, 0, 0.8);
+	text-shadow: 0px 0px 1px #fff;
+	/* Webkit only for now, not bothering with separate div-based fallback for lesser browsers
+	-webkit-box-reflect: below 6px -webkit-gradient(linear, left top, left bottom, color-stop(100%,rgba(255,255,255,.1)), color-stop(65%,rgba(255,255,255,0)));*/
+	color: #000;
+}
+#timeflip-counter.timer{
+	left: 5px;
+	width: 109px;
+}
+    #timeflip-counter.timer div.time{
+    	display: block;
+		float: left;
+		position: relative;
+		width: 50px;
+		left: -40px;
+		padding-top: 0;
+    }
+	#timeflip-counter.timer div.time ul{
+		width:50px;
+		left:0;
+	}
+	#timeflip-counter.timer .digit-separator{
+        display:block;
+        color: #fff;
+        float: left;
+        width: 5px;
+    }
+
+/* Position text in the vertical middle of digit */
+div.timer li.digit .bottom-old span,
+div.timer li.digit .digit-hinge .bottom-new span{
+	display: block;
+	margin-top:-1px;
+}
+
+/* Apply rounded corners and background to all digit slices */
+div.timer li.digit div{
+	border-radius: 4px;
+	background: #fff;
+}
+div.timer li.digit .top-new{
+	position: absolute;
+	color: #000;
+	width: 100%;
+	height: 100%;
+}
+div.timer li.digit .bottom-old{
+	height: 50%;
+	top: 0px;
+	width: 100%;
+	position: absolute;
+	overflow: hidden;
+	z-index: 1;
+}
+
+/* Created dividing line in digit and soft shadow on bottom half */
+div.timer li.digit .shadow{
+	border-bottom: 2px solid #fff;
+	background: none;
+	height: 50%;
+	width: 100%;
+	position: absolute;
+	top:0;
+	z-index: 100;
+	box-shadow: 0px 2px 4px -2px rgba(0, 0, 0, 1);
+	border-radius: 0;
+}
+
+div.timer li.digit .digit-hinge{
+	height: 50%;
+	width: 100%;
+	position: absolute;
+	z-index: 10;
+	-webkit-transform-origin: 50% 100%;
+	-webkit-transition: -webkit-transform 0.3s ease-in;
+
+}
+div.timer li.digit .digit-hinge .top-old,
+div.timer li.digit .digit-hinge .bottom-new{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0px;
+	overflow: hidden;
+	-webkit-backface-visibility: hidden;
+	color:#000;
+}
+
+

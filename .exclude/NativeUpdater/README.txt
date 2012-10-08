@@ -1,0 +1,3 @@
+This is a Flash Builder 4 project archive, it can be imported using File > Import... > Flash Builder > Flash Builder Project...
+
+It requires Flex 4.1 SDK with AIR 2.5 SDK to run properly.
