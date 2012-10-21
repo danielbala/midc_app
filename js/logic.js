@@ -819,6 +819,7 @@ function initCourier(){
 
 function resetAppRetryCourier(){
     $("#console").prepend("<br/>RESET APP AND RETRY COURIER!!!");
+	courier_nativeProcess.exit(true);
 	clearInterval(COURIER_HEALTH_CHECK_INTERVAL);
 	resetLocalStorage();
 	
@@ -930,6 +931,7 @@ function onOutputData(){
         //START PROCESS_COURIERDATA 20 SEC TIMER
         initWorkoutData();
         processDataInterval = setInterval(processCourierData, 20000);
+		clearInterval(COURIER_HEALTH_CHECK_INTERVAL);
         
         
     }
