@@ -19,6 +19,7 @@ public class Courier implements EndexDiscoveredListener, ConnectionErrorListener
 	
 	private BTMessageHandler btm = null;
 	private Thread messageThread = null;
+	private int unitOfMeasure;
 	private boolean running = true;
 	public int bodyWeight = 0;
 	
@@ -27,11 +28,13 @@ public class Courier implements EndexDiscoveredListener, ConnectionErrorListener
 	BluetoothDeviceDiscovery bdd;
 	Thread discoveryThread;
 	
-	public Courier(String address, String bodyWeight, String deviceNames){
-		
+	public Courier(String address, String bodyWeight, String deviceNames, String uom){
+		System.out.println("Courier V 2.1.2");
 		if(!bodyWeight.equals("empty")){
 			this.bodyWeight = Integer.parseInt(bodyWeight);
 		}
+		
+		unitOfMeasure = Integer.parseInt(uom);
 		
 		if(address.equals("empty")){
 			bdd = new BluetoothDeviceDiscovery(deviceNames);
@@ -53,8 +56,8 @@ public class Courier implements EndexDiscoveredListener, ConnectionErrorListener
 	}
 	
 	public static void main(String[] args) {
-		if(args.length != 3){
-			System.out.println("Courier requires 3 parameters: Address BodyWeight DeviceNames. Exiting Application.");
+		if(args.length != 4){
+			System.out.println("Courier requires 4 parameters: Address BodyWeight DeviceNames UOM(0=metric,1=standard). Exiting Application.");
 			System.exit(0);
 		}
 		
@@ -71,7 +74,7 @@ public class Courier implements EndexDiscoveredListener, ConnectionErrorListener
 		
 		try{
 			
-			Courier me = new Courier(args[0], args[1],args[2]);
+			Courier me = new Courier(args[0], args[1],args[2],args[3]);
 			
 			//bdd.setRunning(false);
 		
@@ -148,6 +151,7 @@ public class Courier implements EndexDiscoveredListener, ConnectionErrorListener
 		
 		//String line;
 		
+		
 		InputStreamReader isr = new InputStreamReader(System.in);
 		char[] input = new char[1024];
 		int streamPos = 0;
@@ -207,7 +211,8 @@ public class Courier implements EndexDiscoveredListener, ConnectionErrorListener
 		//String url = String.format(urlFormat, address);
 		System.out.println("url = " + address);
 		
-		btm = new BTMessageHandler(rd, address, this.bodyWeight );
+		btm = new BTMessageHandler(rd, address, this.bodyWeight, this.unitOfMeasure );
+		//btm.setWeightNonThreaded();
 		messageThread = new Thread(btm);
 		messageThread.start();
 		try{

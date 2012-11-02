@@ -99,7 +99,7 @@ public class BluetoothDeviceDiscovery implements DiscoveryListener, Runnable{
        uuidSet[0]=new UUID(0x1101);
 	   //uuidSet[0]=new UUID(0x1002);
 	   try{
-		   LocalDevice.getLocalDevice().getDiscoveryAgent().searchServices(null, uuidSet, rd , this);
+		   LocalDevice.getLocalDevice().getDiscoveryAgent().searchServices( null, uuidSet, rd , this);
 	   
 	   }
 	   catch(Exception e){

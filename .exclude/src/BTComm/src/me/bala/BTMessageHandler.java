@@ -21,13 +21,13 @@ public class BTMessageHandler implements Runnable{
 
 	private String messageFormat = "{ \"address\": \"%s\", \"devicetype\": \"%s\", \"flag\": \"%s\",  \"uom\": %d, \"steps\": %d, \"calories\": %d, \"speed\": { \"whole\": %d, \"fraction\": %d   }, \"distance\": { \"whole\": %d, \"fraction\": %d   },\"time\": { \"hour\": %d, \"minute\": %d, \"second\": %d  }}";
 	private String urlFormat = "btspp://%s;authenticate=false;encrypt=false;master=false";
-	//private int consecutiveStepCount;
-	//private int prevStep;
-	//private int currStep;
+	
 	private String deviceType = "";
 	private boolean shutDown;
 	private boolean initializing = true;
 	private static final int MSG_PAUSE = 150;
+	private boolean _error = false;
+	
 	class MessageProcess{
 		public String address;
 		public String flag = "";
@@ -94,8 +94,10 @@ public class BTMessageHandler implements Runnable{
 	private static final byte MSG_VARIABLE_STEP = (byte) 0x88;
 	private static final byte MSG_VARIABLE_TIME = (byte) 0x89;
 	
+	private static final byte MSG_RESET_ALL = (byte) 0xE2;
 	private static final byte MSG_SET_WEIGHT = (byte) 0xE4;
-	
+	private static final byte MSG_SET_AGE = (byte) 0xE6;
+	private static final byte MSG_SET_UOM = (byte) 0xE9;
 	/*
 	private static final byte MSG_VARIABLE_STATUS = (byte) 0x91;
 	private static final byte MSG_VARIABLE_STATUS_IDLING = (byte) 0x01;
@@ -115,6 +117,8 @@ public class BTMessageHandler implements Runnable{
 	String _url;
 	RemoteDevice _rd;
 	int _userWeight;
+	int _initUom;
+	boolean readyToSend = true;
 	
 	StreamConnectionNotifier sc;
 	StreamConnection streamCon;
@@ -168,15 +172,16 @@ public class BTMessageHandler implements Runnable{
 		}
 	}
 	
-	BTMessageHandler(RemoteDevice rd, String address, int userWeight){
+	BTMessageHandler(RemoteDevice rd, String address, int userWeight, int unitOfMeasure){
 		_address = address;
 		_url = String.format(urlFormat,_address);
 		_rd = rd;
 		_userWeight = userWeight;
+		_initUom = unitOfMeasure;
 		
 		try{
-			Thread.sleep(500);
-			System.out.println("Trying to connect.");
+			//Thread.sleep(500);
+			System.out.println("Trying to connect." + _url);
 			streamCon=(StreamConnection)Connector.open(_url);
 			System.out.println("opened.");
 			if(_rd == null){
@@ -190,7 +195,7 @@ public class BTMessageHandler implements Runnable{
 			
 			outStream = streamCon.openDataOutputStream();
 			
-			System.out.println("CONNECTED|" + _address);
+			System.out.println("CONNECTED|" + _address + "|");
 			connected = true;
 		}
 		catch(javax.bluetooth.BluetoothStateException bse){
@@ -208,8 +213,9 @@ public class BTMessageHandler implements Runnable{
 		}
 		catch(Exception e){
 			//fireErrorEvent();
-			System.out.println("exception");
-			System.out.println(e.toString());
+			_error = true;
+			System.out.println("exception<br>");
+			e.printStackTrace();
 		}// end try
 		
 	}
@@ -227,24 +233,58 @@ public class BTMessageHandler implements Runnable{
 			responseBytes[i] = EMPTY;
 		}
 	}
+	
 	void cmd_setUserWeight(){
 		
+		System.out.println("cmd_setUserWeight " + String.format("%02X ", MSG_SET_WEIGHT));
 		clearRequest();
 		requestBytes[0] = MSG_SET_WEIGHT;
 		byte[] weightBytes = toBytes(_userWeight);
-		printByteArray(weightBytes);
+		//printByteArray(weightBytes);
 		requestBytes[1] = weightBytes[2];
 		requestBytes[2] = weightBytes[3];
 		sendMessage();
 	}
+	void cmd_setUOM(){
+		clearRequest();
+		requestBytes[0] = MSG_SET_UOM;
+		
+		if(_initUom == 0)
+			requestBytes[1] = (byte)0xAA;
+		else
+			requestBytes[1] = (byte)0xFF;
+		
+		sendMessage();
+	}
 	
+void cmd_setUserAge(){
+		
+		System.out.println("cmd_setUserWeight " + String.format("%02X ", MSG_SET_WEIGHT));
+		clearRequest();
+		requestBytes[0] = MSG_SET_WEIGHT;
+		byte[] weightBytes = toBytes(_userWeight);
+		printByteArray(weightBytes);
+		requestBytes[1] = 0x01;//weightBytes[2];
+		requestBytes[2] = 0x5E;//weightBytes[3];
+		sendMessage();
+	}
+
 	void cmd_getFirmWareVersion(){
+		System.out.println("getFirmwareVersion");
 		clearRequest();
 		requestBytes[0] = MSG_FIRMWARE;
 		sendMessage();
 	}
 	
+	void cmd_resetAllCounters(){
+		System.out.println("cmd_resetAllCounters");
+		clearRequest();
+		requestBytes[0] = MSG_RESET_ALL;
+		sendMessage();
+	}
+	
 	void cmd_getDeviceID(){
+		System.out.println("cmd_getDeviceID");
 		clearRequest();
 		requestBytes[0] = MSG_DEVICE_ID;
 		sendMessage();
@@ -348,16 +388,21 @@ public class BTMessageHandler implements Runnable{
 		    	};
 		    	break;
 		    case MSG_SET_WEIGHT:
+		    case MSG_ENGAGE_EX_CTL:
+		    case MSG_FIRMWARE:
+		    case MSG_RESET_ALL:
 		    	if(responseBytes[1] == STATUS_OK)
-		    		System.out.println("weight successfully written.");
+		    		System.out.println(String.format("%02X ", responseBytes[0]) + "successfully written.");
 		    	else
-		    		System.out.println("weight set failure");
-		    	
+		    		System.out.println(String.format("%02X ", responseBytes[0]) + " set failure");
+		        break;
 		    	//requestBytes[0] = MSG_DEVICE_ID
 		 };
+		 readyToSend = true;
 	 }
 	
 	public void cmd_EngageExternalControl(){
+		System.out.println("cmd_EngageExternalControl");
 		clearRequest();
 		requestBytes[0] = MSG_ENGAGE_EX_CTL;
 		sendMessage();
@@ -392,6 +437,8 @@ public class BTMessageHandler implements Runnable{
 		if(connected){
 			
 	        try{
+	        	readyToSend = false;
+	        	//printByteArray(requestBytes);
 	        	outStream.write(requestBytes);
 	            outStream.flush();
 	        }
@@ -405,39 +452,60 @@ public class BTMessageHandler implements Runnable{
 		}
 	}
 
+	public void setWeightNonThreaded(){
+		cmd_EngageExternalControl();
+		cmd_getDeviceID();
+		cmd_getFirmWareVersion();
+		cmd_resetAllCounters();
+		cmd_setUserWeight();
+	}
+	
+	
+	
 	public void run() {
 		int sequence = -5; //to do 2 one time messages
 		boolean request = true;
 		MessageProcess msg = null;
-		System.out.println("msg loop running");
+		//System.out.println("msg loop running");
 		
 		//read response
 		try{
 			
-			while(running){
+			while(!_error && running){
 					
-					if(request){
+					if(request && readyToSend){
 						sequence++;
 						synchronized(lock){
 							switch (sequence){
+								case -5:
+									
+									//cmd_EngageExternalControl();
+									
+									//Thread.sleep(500);
+									break;
 								case -4:
 									cmd_getDeviceID();
-									Thread.sleep(MSG_PAUSE);
+									
 									break;
+									
 								case -3:
-									cmd_EngageExternalControl();
-									Thread.sleep(MSG_PAUSE);
+									cmd_getFirmWareVersion();
+									
 									break;
 								case -2:
-									if(_userWeight!=0){
-										cmd_setUserWeight();
-										Thread.sleep(MSG_PAUSE);	
-									}
+									cmd_setUOM();
+									//cmd_resetAllCounters();
+									//cmd_DisengageExternalControl();
+									//Thread.sleep(MSG_PAUSE);
 									break;
 								case -1:
-									cmd_DisengageExternalControl();
-									Thread.sleep(MSG_PAUSE);
+									
+									if(_userWeight!=0){
+										cmd_setUserWeight();
+										//Thread.sleep(MSG_PAUSE);	
+									}
 									break;
+									
 								//sequence loop starts at 0
 								case 1:  
 									msg = new MessageProcess();
@@ -445,22 +513,22 @@ public class BTMessageHandler implements Runnable{
 									msg.devicetype = deviceType;
 									
 									cmd_getUOM();
-									Thread.sleep(MSG_PAUSE);
+									//Thread.sleep(MSG_PAUSE);
 									break;
 								case 2:  cmd_getStep();
-									Thread.sleep(MSG_PAUSE);
+									//Thread.sleep(MSG_PAUSE);
 									break;
 								case 3:  cmd_getCalories();
-									Thread.sleep(MSG_PAUSE);
+									//Thread.sleep(MSG_PAUSE);
 									break;
 								case 4:  cmd_getDistance();
-									Thread.sleep(MSG_PAUSE);
+									///Thread.sleep(MSG_PAUSE);
 									break;
 								case 5:  cmd_getTime();
-									Thread.sleep(MSG_PAUSE);
+									//Thread.sleep(MSG_PAUSE);
 									break;
 								case 6:  cmd_getTreadbeltSpeed();
-									Thread.sleep(MSG_PAUSE);
+									//Thread.sleep(MSG_PAUSE);
 									break;
 								
 								case 20:
@@ -473,7 +541,7 @@ public class BTMessageHandler implements Runnable{
 									   running = false;
  	    							   fireErrorEvent();
 									}
-									Thread.sleep(100);
+									//Thread.sleep(100);
 									
 									sequence = 0;
 									break;
@@ -495,9 +563,6 @@ public class BTMessageHandler implements Runnable{
 			        			//inStream.re
 			        			processResponse(msg);
 			        		}
-							
-				    		
-							
 			        	}
 					}
 					request = !request;

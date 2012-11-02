@@ -213,8 +213,9 @@ function showDisconnected(){
     checkjava_nativeProcess.exit();
     
     setTimeout(function(){
-        $("b.on").stop(true, true).fadeOut("fast");
+        $("b.on").stop(false, false).fadeOut("fast");
     }, 1300);
+	$("b.on").hide();
     
     //set the text to OFF
     $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
@@ -727,12 +728,20 @@ function initCourier(){
                 var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
                 
                 var _address = get_from_localStorage("known_address");
-                if (_address == null) {
+                if (_address == null || (_address.indexOf(":") == -1) ) { // check ":" for address missing channel.
                     _address = "empty";
                 }
                 
                 var user_weight = appData.Weight ? appData.Weight : "empty";
                 var device_names = appData.Device_Names ? appData.Device_Names : "empty";
+				var user_uom = appData.Displayunits ? appData.Displayunits : "1"; //UNIT OF MEASURE
+				
+				if (user_uom === "English" || user_uom === "Imperial") {
+					user_uom = "1";
+				}
+				else {
+				    user_uom = "0";
+				}
                 
                 var processArgs = new air.Vector["<String>"]();
                 processArgs.push("-jar");
@@ -742,6 +751,8 @@ function initCourier(){
                 processArgs.push(_address.fulltrim()); //known address from local storage
                 processArgs.push(user_weight); //known user weight
                 processArgs.push(device_names); //"ENDEX,LifeSpan,IHP" NO SPACES IN FILE NAME
+                processArgs.push(user_uom); //0=metric or 1=standard/English/imperial
+				
                 try {
                     var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
                     nativeProcessStartupInfo.executable = java_file;
@@ -1095,7 +1106,7 @@ function processCourierData(){
 	}
 	
 	var courierTimeStamp = courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second;
-    
+    var distance_whole_fraction = courierData.distance.whole + (courierData.distance.fraction / 100);
     var temp_workout_row = {
         "patientid": ID_NUMBER,
         "datestamp": today_date,
@@ -1105,7 +1116,7 @@ function processCourierData(){
         "cal": courierData.calories,
         "steps": courierData.steps,
         "speed": courierData.speed.whole + "." + courierData.speed.fraction,
-        "dist": courierData.distance.whole + "." + courierData.distance.fraction,
+        "dist": distance_whole_fraction + "", //courierData.distance.whole + "." + distance_fraction,
         "watt": "",
         "flag": courierData.flag,
         "displayunits": courierData.uom ? "E" : "M", //machine reports 0=metric or 1=imperial,
