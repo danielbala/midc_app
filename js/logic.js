@@ -6,7 +6,8 @@ var DESCRIPTOR_FILE = 'https://www.interactivehealthpartner.com/idc/midc_lang.as
 var APPDATA_URL = 'https://www.interactivehealthpartner.com/idc/midc-data.asp?id='; 
 var IHPPROCESS_URL = 'https://www.interactivehealthpartner.com/idc/process.asp?id='; 
 var UPLOAD_URL = 'https://www.interactivehealthpartner.com/idc/server_upload.php?dest='; 
-var FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin'; 
+var FORGOT_PWD_URL = 'https://www.interactivehealthpartner.com/mfc_managepc.asp?task=pin';
+var LOG_TO_URL = 'https://www.interactivehealthpartner.com/idc/midc-log.asp?id=';
 
 //COUNTERS PUT IN GLOBAL SCOPE SO WE CAN STOP AND START ELSEWHERE
 var stepsCounter = calorieCounter = distanceCounter = distanceTenthsCounter = timeSecCounter = timeMinCounter = {}; 
@@ -201,7 +202,7 @@ function showBTLoading(){
 }
 
 function showDisconnected(){
-
+    stopthatnonsense();
     air.trace("\n show disconnected");
     $("#console").prepend("<br/> show disconnected state");
     BTCONNECTED = false;
@@ -212,24 +213,28 @@ function showDisconnected(){
     courier_nativeProcess.exit();
     checkjava_nativeProcess.exit();
     
-    setTimeout(function(){
-        $("b.on").stop(false, false).fadeOut("fast");
-    }, 1300);
-	$("b.on").hide();
+    
+	$("b.on").stop(true, true).hide();
     
     //set the text to OFF
-    $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
-    
+    $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]); 
     
 }
+function stopthatnonsense(){
+	
+	setTimeout(function(){
+		air.trace("\n show stopthatnonsense");
+        $("b.on").stop(true, true).fadeOut("fast");
+    }, 200);
 
+}
 function showConnected(){
 
     if ($(".alert_message p").html().indexOf(appLang[currLang]["msg_bt_pc_retry"]) !== -1) {
         hideMessage();
     }
     air.trace("\n show connected");
-    $("#console").prepend("<br/> show connected state");
+    $("#console").prepend("<br/> show connected state?");
     
     clearInterval(btinterval);
     clearTimeout(bttimeout);
@@ -241,7 +246,9 @@ function showConnected(){
 	            $("b.on").stop(true, true).fadeIn("fast");
 	        }, 1300);
         //}
-        
+        showthatthang();
+		
+		$("b.on").stop(true, true).show();
         //set the text to connected
         $(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
         
@@ -251,6 +258,14 @@ function showConnected(){
         
     }
     
+}
+function showthatthang(){
+    
+    setTimeout(function(){
+        air.trace("\n show showthatthang");
+        $("b.on").stop(true, true).fadeIn("fast");
+    }, 200);
+
 }
 
 function assignEventHandlers(env){
@@ -321,7 +336,20 @@ function assignEventHandlers(env){
         openExternalURL(FORGOT_PWD_URL);
         
     });
-    
+    $("#logtoserver").live("click", function(e){
+		//send to server
+		var data = "logdata=" + $("#console").html();
+		
+		getDataFrom(LOG_TO_URL+ ID_NUMBER, data, function(response){
+		
+			
+			$("#console").html("<br/> log sent to server: " + response);
+			
+			
+		}, false);
+		
+		e.preventDefault();
+	});
     
     $(".pull_tab").live("click", function(){
         if ($(".pull_tab").hasClass("close_inner")) {
@@ -448,6 +476,10 @@ function keypressHandler(event){
             air.trace("toggle console");
             
             $("#console").toggle();
+			$("#console").find("#logtoserver").remove();
+			$("#console").prepend("</br><button id='logtoserver'>Send to Server</button></br>");
+			
+			
 			e.preventDefault();
 			return false;
             
@@ -683,9 +715,9 @@ function initCourier(){
     $("#console").prepend("<br/><br/> --initCourier-- <br/>");
     
     if (courier_nativeProcess.running) {
-        air.trace("\n already running from initCourier terminate IT \n");
-        $("#console").prepend("<br/> already running from initCourier KILL IT ");
-        courier_nativeProcess.exit(true);
+        //air.trace("\n already running from initCourier terminate IT \n");
+        //$("#console").prepend("<br/> already running from initCourier KILL IT ");
+        //courier_nativeProcess.exit(true);
         //return;
     }
     var _path_to_java = "";
@@ -725,7 +757,7 @@ function initCourier(){
                 
                 $("#console").prepend("<br/> attempt to run courier.jar");
                 
-                var np_file = air.File.applicationDirectory.resolvePath("Courier.jar");
+                var np_file = air.File.applicationDirectory.resolvePath("Courier2.1.2.jar");
                 
                 var _address = get_from_localStorage("known_address");
                 if (_address == null || (_address.indexOf(":") == -1) ) { // check ":" for address missing channel.
@@ -769,6 +801,10 @@ function initCourier(){
                     courier_nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_OUTPUT_IO_ERROR, onIOError);
                     courier_nativeProcess.addEventListener(air.IOErrorEvent.STANDARD_ERROR_IO_ERROR, onIOError);
                     
+					//if (OS == "win") {
+						doHealthCheck();
+					//}
+					
                 } 
                 catch (e) {
                     
@@ -830,8 +866,11 @@ function initCourier(){
 
 function resetAppRetryCourier(){
     $("#console").prepend("<br/>RESET APP AND RETRY COURIER!!!");
+	
 	courier_nativeProcess.exit(true);
-	clearInterval(COURIER_HEALTH_CHECK_INTERVAL);
+	
+	clearTimeout(COURIER_HEALTH_CHECK_TIMEOUT);
+	
 	resetLocalStorage();
 	
 	if (OS == "win") {
@@ -842,6 +881,7 @@ function resetAppRetryCourier(){
 		    
     }
 	add_to_localStorage('triedReset', "true");
+	
 	initCourier();
 	
 	
@@ -882,50 +922,54 @@ function sendCourierMessage(message){
 
 
 //bluetooth event handlers
-var COURIER_HEALTH_CHECK_INTERVAL = 0;
+var COURIER_HEALTH_CHECK_TIMEOUT = 0;
+function doHealthCheck(){
+    
+	
+    //air.trace("courier message: ", msg);
+    if (COURIER_HEALTH_CHECK_TIMEOUT == 0) {
+        
+        //From the moment courier receives its first message, 
+        //we want to check its status at 30 seconds, to prevent a limbo state
+        COURIER_HEALTH_CHECK_TIMEOUT = setTimeout(function(){
+            $("#console").prepend("<br/> 30 SECOND HEALTH CHECK");
+			air.trace("dohealthcheck");
+            
+            if (BTCONNECTED) {
+                //ALL IS GOOD
+                air.trace("healthcheck: courier is CONNECTED");
+                $("#console").prepend("<br/>healthcheck: courier is CONNECTED");
+            }
+            else {
+                
+                if (courier_nativeProcess.running) {
+                    //WAIT: COURIER IS NOT CONNECTED BUT IT IS RUNNING... WE MUST BE IN LIMBO
+                    
+                    air.trace("\nhealthcheck: courier NOT CONNECTED but runnning terminate IT \n");
+                    $("#console").prepend("<br/>healthcheck: courier NOT CONNECTED but runnning terminate IT ");
+                    courier_nativeProcess.exit(true);
+                    
+                    //KILL IT AND RESET/RETRY
+                    resetAppRetryCourier();
+                    
+                }
+                else {
+					
+                    air.trace("\nhealthcheck: courier NOT CONNECTED and NOT RUNNING \n");
+                    $("#console").prepend("<br/>healthcheck: courier NOT CONNECTED and NOT RUNNING  ");
+                    showDisconnected();
+                }
+             
+            
+            
+            }
+            
+        }, 30000);
+    }
+
+}
 function onOutputData(){
     var msg = courier_nativeProcess.standardOutput.readUTFBytes(courier_nativeProcess.standardOutput.bytesAvailable);
-    
-    //air.trace("courier message: ", msg);
-    if (COURIER_HEALTH_CHECK_INTERVAL == 0) {
-		
-		//From the moment courier recieves its first message, 
-		//we want to check its status every 40 seconds, to prevent a limbo state
-		COURIER_HEALTH_CHECK_INTERVAL = setInterval(function(){
-			air.trace("courier is ALIVE");
-			
-			if (BTCONNECTED) {
-				//ALL IS GOOD
-				air.trace("courier is CONNECTED");
-				$("#console").prepend("<br/> courier is CONNECTED");
-			}
-			else {
-				
-				if (courier_nativeProcess.running) {
-					//WAIT: COURIER IS NOT CONNECTED BUT IT IS RUNNING... WE MUST BE IN LIMBO
-					
-					air.trace("\n courier NOT CONNECTED but runnning terminate IT \n");
-					$("#console").prepend("<br/> courier NOT CONNECTED but runnning terminate IT ");
-					courier_nativeProcess.exit(true);
-					
-					//KILL IT AND RESET/RETRY
-					resetAppRetryCourier();
-					
-				}
-				else {
-					air.trace("\n courier NOT CONNECTED and NOT RUNNINING \n");
-					$("#console").prepend("<br/> courier NOT CONNECTED and NOT RUNNINING  ");
-					showDisconnected();
-					//KILL THIS HEALTH CHECK
-					clearInterval(COURIER_HEALTH_CHECK_INTERVAL);
-				}
-			 
-			
-			
-			}
-			
-		}, 40000);
-	}
 	
     if (msg.indexOf("CONNECTED") !== -1) {
     
@@ -942,7 +986,7 @@ function onOutputData(){
         //START PROCESS_COURIERDATA 20 SEC TIMER
         initWorkoutData();
         processDataInterval = setInterval(processCourierData, 20000);
-		clearInterval(COURIER_HEALTH_CHECK_INTERVAL);
+		clearTimeout(COURIER_HEALTH_CHECK_TIMEOUT);
         
         
     }
@@ -997,7 +1041,7 @@ function onOutputData(){
         
     }
     else {
-		if (msg.length > 1) {
+		if (msg.length > 3) {
 			air.trace("courier message: ", msg);
 			$("#console").prepend("<br/>else courier message: " + msg);
 		}
@@ -1054,18 +1098,21 @@ function onExit(event){
 	air.trace("courier is DEAD");
 	processCourierData();
 	
+	
     $("#console").prepend("<br/> courier exited with code: " + event.exitCode);
 	$("#console").prepend("<br/> courier is DEAD");
     BTCONNECTED = false;
     
-	clearInterval(COURIER_HEALTH_CHECK_INTERVAL);
+	showDisconnected();
+	clearTimeout(COURIER_HEALTH_CHECK_TIMEOUT);
 	
     if (ILLEGAL_ADDRESS_ERROR) {
         //lets try it again
+		delete_from_localStorage('known_address');
+		$("#console").prepend("<br/> ILLEGAL_ADDRESS_ERROR");
+		air.trace("ILLEGAL_ADDRESS_ERROR");
+		
         initCourier();
-    }
-    else {
-        showDisconnected();
     }
 	
     
@@ -1148,7 +1195,7 @@ function processCourierData(){
     else {
         //workout_row.flag = courierData.flag;
         if (courierData.flag !== "P" && courierData.steps !== -1) {
-			showConnected();
+			//showConnected();
 			
             previous_pause = false;
             
@@ -1162,6 +1209,8 @@ function processCourierData(){
         }
         
     }
+	
+	showConnected();
     
 }
 
@@ -1752,10 +1801,13 @@ function removeUser(){
     delete_from_localStorage('password');
 }
 
-function getDataFrom(url, data, callback){
-    air.trace("getdatafromurl: " + url + " -data: " + data);
-    $("#console").prepend("<br/> make server call: " + url + " -data: " + data);
-    //air.trace(url);
+function getDataFrom(url, data, callback, logit){
+    air.trace("getdatafromurl: " + url, " -data: " + data);
+    
+	if (typeof logit === "undefined") {
+		$("#console").prepend("<br/> make server call: " + url + " -data: " + data);
+	}
+	//air.trace(url);
     //air.trace(data);
     
     request = new air.URLRequest(url);
