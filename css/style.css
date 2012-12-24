@@ -223,7 +223,7 @@ ul{
 					position: absolute;
 					left: 0px;
 					top: 0px;
-					display: none;
+					display: block;
 					/*top: -10px;*/
                 
                }

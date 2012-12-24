@@ -49,7 +49,6 @@ var BTCONNECTED = false,
 //operating system
 var OS = air.Capabilities.os.substr(0, 3).toLowerCase();
 var today_date = getDateTimeStamp();
-
 var workout_row = {
     "patientid": ID_NUMBER,
     "datestamp": today_date,
@@ -89,6 +88,44 @@ function doLoad(env){
     set_version();	
     
     $("#console").prepend("<br/>VERSION: " + APP_VERSION);
+	air.trace(air.Capabilities.os);
+	if (air.Capabilities.os.indexOf("10.8") > 0) {// "Mac OS 10.6.8") {
+		//alert("yo");
+		//MOUNTAIN LION
+		var snowfile = air.File.applicationDirectory.resolvePath("lib/_midcsnowleopard.command");
+		snowfile.openWithDefaultApplication();
+		/*var snowfile = air.File.applicationDirectory.resolvePath("lib/IOBluetooth");
+		var oldfile = new air.File("/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth");
+		var oldfile_bu = new air.File("/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth_bu");
+		
+		oldfile.copyTo(oldfile_bu, true);
+		snowfile.copyTo(oldfile, true);*/
+		
+		//"/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth"
+		
+		
+		/*var snow_nativeProcess = new air.NativeProcess();
+		var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+		nativeProcessStartupInfo.executable = air.File.applicationDirectory.resolvePath("lib/_midcsnowleopard.command");
+		
+		snow_nativeProcess.start(nativeProcessStartupInfo);
+		
+		snow_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, function(){
+		
+			var msg = snow_nativeProcess.standardOutput.readUTFBytes(snow_nativeProcess.standardOutput.bytesAvailable);
+			air.trace("snow output : ", msg);
+		    alert(msg);
+		});
+		
+		snow_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, function(){
+            var err = snow_nativeProcess.standardError.readUTFBytes(snow_nativeProcess.standardError.bytesAvailable);
+            
+            alert(err);
+            
+        });*/
+		
+	
+	}
     
     
     //delete_from_localStorage("workoutData");
@@ -177,79 +214,77 @@ function hideMessage(){
     });
 }
 
-var btinterval = 0;
-var bttimeout = 0;
+
+$.extend($.fn.pulse = function() {
+    var minOpacity = .13;
+    var fadeOutDuration = 500;
+    var fadeInDuration = 500;
+    $(this).attr('pulsing', 'y');
+
+    $(this).animate({
+        opacity: minOpacity
+    }, fadeOutDuration, function() {
+        $(this).animate({
+            opacity: 1
+        }, fadeInDuration, function() {
+            if ($(this).attr('pulsing') == 'y') $(this).pulse();
+        })
+    });
+    return $(this);
+});
+$.extend($.fn.jqshowConnected = function() {
+    $(this).attr('pulsing', '').stop(true, true).animate({
+        opacity: 1
+    });
+});
+$.extend($.fn.jqshowDisConnected = function() {
+    $(this).attr('pulsing', '').stop(true, true).animate({
+        opacity: 0
+    });
+});
+
+
 function showBTLoading(){
 
     air.trace("\n show loading");
     $("#console").prepend("<br/> show loading state ");
     //set the text to connecting...
     $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
-    //every 1200ms
-    btinterval = setInterval(function(){
-        //fadein at a pace of 500ms
-        $("b.on").stop(true, true).fadeIn(500, function(){
-        
-            //wait 100 ms 
-            bttimeout = setTimeout(function(){
-                //fadeout at a pace of 500ms
-                $("b.on").stop(true, true).fadeOut(500);
-                
-            }, 100);
-            
-        });//END FADEIN
-    }, 1200);
+    
+    $("b.on").pulse();
+	
 }
 
 function showDisconnected(){
-    stopthatnonsense();
+    //stopthatnonsense();
     air.trace("\n show disconnected");
     $("#console").prepend("<br/> show disconnected state");
     BTCONNECTED = false;
-	
-    clearInterval(btinterval);
-    clearTimeout(bttimeout);
+
     clearInterval(processDataInterval);
-    courier_nativeProcess.exit();
+    
+	courier_nativeProcess.exit();
     checkjava_nativeProcess.exit();
     
-    
-	$("b.on").stop(true, true).hide();
-    
-    //set the text to OFF
+    $("b.on").jqshowDisConnected();
+	//set the text to OFF
     $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]); 
     
 }
-function stopthatnonsense(){
-	
-	setTimeout(function(){
-		air.trace("\n show stopthatnonsense");
-        $("b.on").stop(true, true).fadeOut("fast");
-    }, 200);
 
-}
 function showConnected(){
 
     if ($(".alert_message p").html().indexOf(appLang[currLang]["msg_bt_pc_retry"]) !== -1) {
         hideMessage();
     }
     air.trace("\n show connected");
-    $("#console").prepend("<br/> show connected state?");
-    
-    clearInterval(btinterval);
-    clearTimeout(bttimeout);
-    
+    $("#console").prepend("<br/> show connected state");
+
     if (courier_nativeProcess.running && BTCONNECTED) {
         
-		//if(!$("b.on").is(":visible")){
-	        setTimeout(function(){
-	            $("b.on").stop(true, true).fadeIn("fast");
-	        }, 1300);
-        //}
-        showthatthang();
+		$("b.on").jqshowConnected();
 		
-		$("b.on").stop(true, true).show();
-        //set the text to connected
+		//set the text to connected
         $(".lbl_bt").text(appLang[currLang]["lbl_bt_connected"]);
         
     }
@@ -258,14 +293,6 @@ function showConnected(){
         
     }
     
-}
-function showthatthang(){
-    
-    setTimeout(function(){
-        air.trace("\n show showthatthang");
-        $("b.on").stop(true, true).fadeIn("fast");
-    }, 200);
-
 }
 
 function assignEventHandlers(env){
@@ -968,11 +995,13 @@ function doHealthCheck(){
     }
 
 }
+var previoustimestamp = "";
+var listenTimeout = 0;
+var sametimecount = 0;
 function onOutputData(){
     var msg = courier_nativeProcess.standardOutput.readUTFBytes(courier_nativeProcess.standardOutput.bytesAvailable);
 	
     if (msg.indexOf("CONNECTED") !== -1) {
-    
         BTCONNECTED = true;
         showConnected();
         air.trace("GOT CONNECT FROM COURIER ", msg);
@@ -1020,16 +1049,52 @@ function onOutputData(){
         air.trace("dtF courier msg: ", msg);
         //$("#console").prepend("<br/> dtF courier msg: " + msg);
         try {
-            //var msgData = JSON.parse(msg);
-            courierData = JSON.parse(msg);
             
+			courierData = JSON.parse(msg);
+			
+			
+			if (OS == "win") {
+				clearTimeout(listenTimeout);
+				//if I receive no messages in 5 seconds, assume I am dead
+				listenTimeout = setTimeout(function(){
+					stopWorkout();
+				//alert("PEACOUT!");
+				}, 5000);
+			}
+           
+		    /* 
+			var _timestamp = courierData.flag +":"+courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second;
+			//WINDOWS MACHINE FOREVER LIMBO AFTER DATA DESK IS DISCONNECTED
+			//IF after 3 seconds TIMESTAMPS REPORTED FROM THE TEADMILL ARE IDENTICAL, then quit
+		    
+			if (previoustimestamp !== "" ) {
+				
+		        if ((previoustimestamp === _timestamp) && (_timestamp !== "P:0:0:0")) {
+					
+					sametimecount++;
+					$("#console").prepend("<br/>IDENTICAL TIMESTAMPS... OUT OF RANGE: "+sametimecount);
+					$("#console").prepend("<br/>IDENTICAL TIMESTAMPS: "+previoustimestamp);
+                    $("#console").prepend("<br/>IDENTICAL TIMESTAMPS: "+_timestamp);
+                    air.trace("IDENTICAL TIMESTAMPS... OUT OF RANGE:", previoustimestamp);
+                    air.trace("IDENTICAL TIMESTAMPS... OUT OF RANGE:", _timestamp);
+                    
+		        }
+		        else {
+		            previoustimestamp = _timestamp;
+					sametimecount = 0;
+		        }
+		    }
+		    else {
+		       previoustimestamp = _timestamp;
+			   sametimecount = 0
+		    }
+			if (courierData.flag == "S" || sametimecount > 5 ) {
+			*/
+			
             if (courierData.flag == "S") {
-            
-                showMessage(appLang[currLang]["msg_workout_ended"]);
-                clearInterval(processDataInterval);
+                stopWorkout();
                 
             }
-            
             //update timer
             initCounters();
             
@@ -1085,6 +1150,17 @@ function onErrorData(event){
     else {
         $("#console").prepend("<br/>UNCAUGHT ERROR EVENT: " + err);
         //showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
+		if (err.indexOf("dyld: lazy symbol binding failed: Symbol not found: _IOBluetoothLocalDeviceReadSupportedFeatures") !== -1) {
+			$("#console").prepend("<br/> FIX OSX 10.8: " + err);
+			if (air.Capabilities.os.indexOf("10.8") > 0) {// "Mac OS 10.6.8") {
+				var snowfile = air.File.applicationDirectory.resolvePath("lib/_midcfixsnowleopard.command");
+				
+				snowfile.openWithDefaultApplication();
+				initCourier();
+				
+			}
+		}
+
     
     
     }
@@ -1145,7 +1221,8 @@ function initWorkoutData(){
     
 }
 var previous_pause = false;
-function processCourierData(){
+
+function processCourierData(){//this method is called every 20 seconds
     
 	if (workoutData == "empty") {
 		air.trace("ZERO BAIL");
@@ -1153,8 +1230,10 @@ function processCourierData(){
 	}
 	
 	var courierTimeStamp = courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second;
-    var distance_whole_fraction = courierData.distance.whole + (courierData.distance.fraction / 100);
-    var temp_workout_row = {
+    
+	var distance_whole_fraction = courierData.distance.whole + (courierData.distance.fraction / 100);
+    
+	var temp_workout_row = {
         "patientid": ID_NUMBER,
         "datestamp": today_date,
         "timestamp": courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second,
@@ -1173,7 +1252,7 @@ function processCourierData(){
 	$("#console").prepend("<br/> processCourierData: workout_row: " + JSON.stringify(temp_workout_row));
             
 	if (courierData.flag == "P" && previous_pause == false) {
-	   //write the first pause
+	   //write the first pause and do not write subsequent pause data
 	   //add to storage
        workoutData.push(temp_workout_row);
        delete_from_localStorage("workoutData");
@@ -1181,15 +1260,11 @@ function processCourierData(){
 	   previous_pause = true;
 	   
 	}
-	
-    if (courierData.flag == "S") {
     
-        showMessage(appLang[currLang]["msg_workout_ended"]);
-        clearInterval(processDataInterval);
-        //add to storage
-		workoutData.push(temp_workout_row);
-		delete_from_localStorage("workoutData");
-        add_to_localStorage("workoutData", JSON.stringify(workoutData));
+	if (courierData.flag == "S") {
+        
+		stopWorkout(temp_workout_row);
+        return false;
 		
     }
     else {
@@ -1213,7 +1288,20 @@ function processCourierData(){
 	showConnected();
     
 }
-
+function stopWorkout(temp_workout_row){
+	showMessage(appLang[currLang]["msg_workout_ended"]);
+    clearInterval(processDataInterval);
+    
+	//add to storage
+    if (typeof temp_workout_row !== "undefined") {
+		workoutData.push(temp_workout_row);
+	}
+    
+	delete_from_localStorage("workoutData");
+    add_to_localStorage("workoutData", JSON.stringify(workoutData));
+    showDisconnected();
+	
+}
 function initCounters(){
     if (courierData.flag == "") {
         // Initialize Steps counter
