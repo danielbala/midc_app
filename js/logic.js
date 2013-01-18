@@ -123,6 +123,7 @@ function doLoad(env){
     set_version();	
     
     $("#console").prepend("<br/>VERSION: " + APP_VERSION);
+	$("#console").prepend("<br/>OS: " + air.Capabilities.os);
 	air.trace(air.Capabilities.os);
     
     //delete_from_localStorage("workoutData");
@@ -210,36 +211,6 @@ function hideMessage(){
         $(".alert_message p").html("");
     });
 }
-
-
-$.extend($.fn.pulse = function() {
-    var minOpacity = .13;
-    var fadeOutDuration = 500;
-    var fadeInDuration = 500;
-    $(this).attr('pulsing', 'y');
-
-    $(this).animate({
-        opacity: minOpacity
-    }, fadeOutDuration, function() {
-        $(this).animate({
-            opacity: 1
-        }, fadeInDuration, function() {
-            if ($(this).attr('pulsing') == 'y') $(this).pulse();
-        })
-    });
-    return $(this);
-});
-$.extend($.fn.jqshowConnected = function() {
-    $(this).attr('pulsing', '').stop(true, true).animate({
-        opacity: 1
-    });
-});
-$.extend($.fn.jqshowDisConnected = function() {
-    $(this).attr('pulsing', '').stop(true, true).animate({
-        opacity: 0
-    });
-});
-
 
 function showBTLoading(){
 
@@ -866,7 +837,7 @@ function initCourier(){
                     
                         air.trace("try np start:", e.message);
                         $("#console").prepend("<br/>UGLY CATCH try np start: " + e.message);
-                        showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
+                        //showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
                         showDisconnected();
                     }
                 }
@@ -876,7 +847,7 @@ function initCourier(){
             }
             else {
                 showDisconnected();
-                showMessage("Your system does not support Bluetooth communication --- CODE:NO-NP001");
+                showMessage(appLang[currLang]["msg_no_bluetooth_support"]);
             }
         }
         else {
@@ -898,7 +869,7 @@ function resetAppRetryCourier(){
 	resetLocalStorage();
 	
 	if (OS == "win") {
-        unpairWIN("IHP");
+        unpairWIN("IHP"); //TODO get actual device name from courier
 		//unpairWIN("ENDEX");
 		//unpairWIN("LifeSpan");
 		add_to_localStorage('javaPath', "c:\\windows\\system32\\java.exe");
@@ -1011,7 +982,9 @@ function onOutputData(){
         
         //START PROCESS_COURIERDATA 20 SEC TIMER
         initWorkoutData();
-        processDataInterval = setInterval(processCourierData, 20000);
+        
+		processDataInterval = setInterval(processCourierData, 20000);
+		
 		clearTimeout(COURIER_HEALTH_CHECK_TIMEOUT);
         
         
@@ -1023,7 +996,9 @@ function onOutputData(){
         //ask them to turn on BT on PC
         
         showMessage(appLang[currLang]["msg_bt_pc_retry"] + " <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
-        $(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+        
+		$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
+		
         showDisconnected();
         
     }
@@ -1032,7 +1007,6 @@ function onOutputData(){
         BTCONNECTED = false;
         
         delete_from_localStorage('known_address');
-        //kill process
         
         showMessage(appLang[currLang]["msg_bt_equip_retry"] + " <br/><input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
         
@@ -1054,8 +1028,7 @@ function onOutputData(){
 				clearTimeout(listenTimeout);
 				//if I receive no messages in 5 seconds, assume I am dead
 				listenTimeout = setTimeout(function(){
-					stopWorkout(0, "Bluetooth wireless signal disconnected -- do you wish to re-connect?");
-				//alert("PEACOUT!");
+					stopWorkout(0, appLang[currLang]["msg_bluetooth_signal_disconnected"]);
 				}, 5000);
 			}
 			
@@ -1076,7 +1049,7 @@ function onOutputData(){
     else {
 		if (msg.length > 3) {
 			air.trace("courier message: ", msg);
-			$("#console").prepend("<br/>else courier message: " + msg);
+			//**$("#console").prepend("<br/>else courier message: " + msg);
 		}
     }
     
@@ -1106,7 +1079,7 @@ function onErrorData(event){
     }
     else if ((err.indexOf("Unable to locate a Java Runtime to invoke.") !== -1) && OS == "mac") {
     
-        showMessage("<small>Your Java system software needs to be turned on. Use the Java Preferences utility (located in the Utilities folder in your Applications folder) to do this.</small>");
+        showMessage("<small>"+appLang[currLang]["msg_turn_java_on"]+"</small>");
         
     }
     else if ((err.indexOf("Unable to locate a Java Runtime to invoke.") !== -1) && OS == "mac") {
@@ -1119,22 +1092,7 @@ function onErrorData(event){
         $("#console").prepend("<br/>UNCAUGHT ERROR EVENT: " + err);
         //showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
 		/*if (err.indexOf("dyld: lazy symbol binding failed: Symbol not found: _IOBluetoothLocalDeviceReadSupportedFeatures") !== -1) {
-			$("#console").prepend("<br/> FIX OSX 10.8: " + err);
-			if (air.Capabilities.os.indexOf("10.8") > 0) {// "Mac OS 10.6.8") {
-				
-				
-				var snowfile = air.File.applicationDirectory.resolvePath("lib/_midcfixsnowleopard.command");
-				var triedalready = get_from_localStorage('triediobluetoothfix');
-				
-				if (triedalready === "yes") {
-					alert("tried this fix already");
-				}
-				else {
-				    add_to_localStorage('triediobluetoothfix', "yes");
-                    snowfile.openWithDefaultApplication();
-                    
-				}
-			}
+			
 		}*/
 
     
@@ -1598,7 +1556,13 @@ function getAppDescriptor(callback){
 
     getDataFrom(DESCRIPTOR_FILE, "", function(response){
         //air.trace(response);
-        appDesc = JSON.parse(response);
+        if(response == "servererror"){
+			alert(appLang[currLang]["msg_cant_contact_server"]);
+			air.NativeApplication.nativeApplication.exit(); 
+		}
+		appDesc = JSON.parse(response);
+		
+		
 		
 		/*
 		 "appVersion": {
@@ -1646,7 +1610,9 @@ function getAppDescriptor(callback){
 			
 			$("#login_items").hide();
 			$("#wrapper").fadeIn("slow", function(){
-				$("#update_prompt").prepend("<p>New version (" + newAppVersion + ") is available. Would you like to download and install it?</p>").fadeIn("fast");
+				var msg_new_version_available = appLang[currLang]["msg_new_version_available"].replace("12345", newAppVersion);
+				
+				$("#update_prompt").prepend("<p>"+msg_new_version_available+"</p>").fadeIn("fast");
 				
 				$("#update_no").click(function(){
 					
@@ -1700,7 +1666,7 @@ function doSignIn(callback){
     username = document.getElementById('username').value;
     password = document.getElementById('password').value;
     
-    data = "lname=" + escape(username) + "&password=" + escape(password);//we should encypt this...
+    data = "lname=" + escape(username) + "&password=" + escape(password);//we should encypt this... httpsFTW
     getDataFrom(LOGIN_URL, data, function(response){
     
         //air.trace("back", response);
@@ -1746,7 +1712,7 @@ function doSignIn(callback){
             
                 $("#progress").hide();
                 $(".intro").hide();
-                $('#invalid_login').html("Unable to Connect to the Server. Please Try Again.").fadeIn('fast');
+                $('#invalid_login').html(appLang[currLang]["msg_cant_contact_server"]).fadeIn('fast');
                 
             }//END 
         }
@@ -1913,7 +1879,8 @@ function getDataFrom(url, data, callback, logit){
         loader.load(request);
     } 
     catch (error) {
-        alert("Could not contact server.");
+		var connecterrormsg = appLang[currLang]["msg_cant_contact_server"] ? appLang[currLang]["msg_cant_contact_server"] : "Unable to contact Server!";
+        alert(connecterrormsg);
         air.trace("sync process error: ", error.message);
         $("#console").prepend("<br/> sync error: " + error.message);
         callback(error.message);
@@ -1928,8 +1895,8 @@ function getDataFrom(url, data, callback, logit){
 //@param keyname
 //@param string value
 function add_to_localStorage(keyname, value){
-    air.trace("add_to_localStorage: " + keyname + "=" + value);
-    $("#console").prepend("<br/> add_to_localStorage: " + keyname + "=" + value);
+    //**air.trace("add_to_localStorage: " + keyname + "=" + value);
+    //**$("#console").prepend("<br/> add_to_localStorage: " + keyname + "=" + value);
     
     var data = new air.ByteArray();
     data.writeUTFBytes(value);
@@ -1947,15 +1914,15 @@ function get_from_localStorage(keyname){
     if (value !== null) {
         return_val = value.readUTFBytes(value.bytesAvailable);
     }
-    air.trace("get_from_localStorage: " + keyname + "=" + return_val);
-    $("#console").prepend("<br/> get_from_localStorage: " + keyname + "=" + return_val);
+    //**air.trace("get_from_localStorage: " + keyname + "=" + return_val);
+    //**$("#console").prepend("<br/> get_from_localStorage: " + keyname + "=" + return_val);
     
     return return_val;
 }
 
 //UTIL
 function install_JRE(){
-    showMessage("<small>Java not found: Prompting Install. Please restart the app upon completion.</small>");
+    showMessage("<small>"+appLang[currLang]["msg_java_not_found"]+"</small>");
     showDisconnected();
     
     var jre_file = new air.File();
@@ -1967,13 +1934,13 @@ function install_JRE(){
 //delete from local storage
 //@param key name
 function delete_from_localStorage(keyname){
-    air.trace("delete_from_localStorage: " + keyname);
-    $("#console").prepend("<br/> delete_from_localStorage: " + keyname);
+    //**air.trace("delete_from_localStorage: " + keyname);
+    //**$("#console").prepend("<br/> delete_from_localStorage: " + keyname);
     air.EncryptedLocalStore.removeItem(keyname);
 }
 
 function openExternalURL(href){
-    if (confirm("Redirecting you to: " + href)) {
+    if (confirm(appLang[currLang]["msg_external_url"]+ ":" + href)) {
         var urlReq = new air.URLRequest(href);
         air.navigateToURL(urlReq);
     }
@@ -1981,12 +1948,8 @@ function openExternalURL(href){
 
 function getDateTimeStamp(){
     //24:06:15
-    
     var date = new Date();
-    
-    return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
-    
-    
+    return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();   
 }
 
 Array.max = function(array){
@@ -1998,3 +1961,30 @@ Array.min = function(array){
 String.prototype.fulltrim = function(){
     return this.replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g, '').replace(/\s+/g, ' ');
 }
+$.extend($.fn.pulse = function() {
+    var minOpacity = .13;
+    var fadeOutDuration = 500;
+    var fadeInDuration = 500;
+    $(this).attr('pulsing', 'y');
+
+    $(this).animate({
+        opacity: minOpacity
+    }, fadeOutDuration, function() {
+        $(this).animate({
+            opacity: 1
+        }, fadeInDuration, function() {
+            if ($(this).attr('pulsing') == 'y') $(this).pulse();
+        })
+    });
+    return $(this);
+});
+$.extend($.fn.jqshowConnected = function() {
+    $(this).attr('pulsing', '').stop(true, true).animate({
+        opacity: 1
+    });
+});
+$.extend($.fn.jqshowDisConnected = function() {
+    $(this).attr('pulsing', '').stop(true, true).animate({
+        opacity: 0
+    });
+});
