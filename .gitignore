@@ -1,9 +1,8 @@
-
 *.89338~
-*.tmp~
+.tmp*
 *.exe
 .project
-.DS_Store
+*.DS_Store*
 *.air
 *.dmg
 IDCcert.p12

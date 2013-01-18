@@ -45,7 +45,7 @@ var courierData = {
         "second": 0
     }
 };
-var BTCONNECTED = false, 
+var BTCONNECTED = false; 
 //operating system
 var OS = air.Capabilities.os.substr(0, 3).toLowerCase();
 var today_date = getDateTimeStamp();
@@ -71,7 +71,41 @@ try {
 } 
 catch (e) {
 }
-
+function fixteneight(){
+    //delete_from_localStorage('triediobluetoothfix');
+    if (air.Capabilities.os.indexOf("10.8") > 0) {// "Mac OS 10.6.8") {        
+        
+        var snowfile = air.File.applicationDirectory.resolvePath("lib/_midcfixsnowleopard.sh");
+        var triedalready = get_from_localStorage('triediobluetoothfix');
+        
+        if (triedalready === "yes") {
+            //alert("tried this fix already");
+            delete_from_localStorage('triediobluetoothfix');
+        }
+        else {
+            add_to_localStorage('triediobluetoothfix', "yes");
+            //snowfile.openWithDefaultApplication();
+            
+            var snowfix_nativeProcess = new air.NativeProcess();
+            
+            var processArgs = new air.Vector["<String>"]();
+            //processArgs.push('-c');            
+            var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
+            nativeProcessStartupInfo.executable = snowfile;
+                        
+            snowfix_nativeProcess.start(nativeProcessStartupInfo);
+            snowfix_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, function(){
+                var msg = snowfix_nativeProcess.standardOutput.readUTFBytes(snowfix_nativeProcess.standardOutput.bytesAvailable);
+                //alert("out: "+msg);
+            });
+            snowfix_nativeProcess.addEventListener(air.NativeProcessExitEvent.EXIT, function(event){
+                //alert("Process exited with ", event.exitCode);
+            });
+            air.NativeApplication.nativeApplication.exit();
+            
+        }
+    }
+}
 function set_version(){
 
     var appdesc = air.NativeApplication.nativeApplication.applicationDescriptor;
@@ -85,48 +119,11 @@ function set_version(){
 }
 
 function doLoad(env){
+	fixteneight();
     set_version();	
     
     $("#console").prepend("<br/>VERSION: " + APP_VERSION);
 	air.trace(air.Capabilities.os);
-	if (air.Capabilities.os.indexOf("10.8") > 0) {// "Mac OS 10.6.8") {
-		//alert("yo");
-		//MOUNTAIN LION
-		var snowfile = air.File.applicationDirectory.resolvePath("lib/_midcsnowleopard.command");
-		snowfile.openWithDefaultApplication();
-		/*var snowfile = air.File.applicationDirectory.resolvePath("lib/IOBluetooth");
-		var oldfile = new air.File("/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth");
-		var oldfile_bu = new air.File("/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth_bu");
-		
-		oldfile.copyTo(oldfile_bu, true);
-		snowfile.copyTo(oldfile, true);*/
-		
-		//"/System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth"
-		
-		
-		/*var snow_nativeProcess = new air.NativeProcess();
-		var nativeProcessStartupInfo = new air.NativeProcessStartupInfo();
-		nativeProcessStartupInfo.executable = air.File.applicationDirectory.resolvePath("lib/_midcsnowleopard.command");
-		
-		snow_nativeProcess.start(nativeProcessStartupInfo);
-		
-		snow_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_OUTPUT_DATA, function(){
-		
-			var msg = snow_nativeProcess.standardOutput.readUTFBytes(snow_nativeProcess.standardOutput.bytesAvailable);
-			air.trace("snow output : ", msg);
-		    alert(msg);
-		});
-		
-		snow_nativeProcess.addEventListener(air.ProgressEvent.STANDARD_ERROR_DATA, function(){
-            var err = snow_nativeProcess.standardError.readUTFBytes(snow_nativeProcess.standardError.bytesAvailable);
-            
-            alert(err);
-            
-        });*/
-		
-	
-	}
-    
     
     //delete_from_localStorage("workoutData");
     
@@ -1057,39 +1054,10 @@ function onOutputData(){
 				clearTimeout(listenTimeout);
 				//if I receive no messages in 5 seconds, assume I am dead
 				listenTimeout = setTimeout(function(){
-					stopWorkout();
+					stopWorkout(0, "Bluetooth wireless signal disconnected -- do you wish to re-connect?");
 				//alert("PEACOUT!");
 				}, 5000);
 			}
-           
-		    /* 
-			var _timestamp = courierData.flag +":"+courierData.time.hour + ":" + courierData.time.minute + ":" + courierData.time.second;
-			//WINDOWS MACHINE FOREVER LIMBO AFTER DATA DESK IS DISCONNECTED
-			//IF after 3 seconds TIMESTAMPS REPORTED FROM THE TEADMILL ARE IDENTICAL, then quit
-		    
-			if (previoustimestamp !== "" ) {
-				
-		        if ((previoustimestamp === _timestamp) && (_timestamp !== "P:0:0:0")) {
-					
-					sametimecount++;
-					$("#console").prepend("<br/>IDENTICAL TIMESTAMPS... OUT OF RANGE: "+sametimecount);
-					$("#console").prepend("<br/>IDENTICAL TIMESTAMPS: "+previoustimestamp);
-                    $("#console").prepend("<br/>IDENTICAL TIMESTAMPS: "+_timestamp);
-                    air.trace("IDENTICAL TIMESTAMPS... OUT OF RANGE:", previoustimestamp);
-                    air.trace("IDENTICAL TIMESTAMPS... OUT OF RANGE:", _timestamp);
-                    
-		        }
-		        else {
-		            previoustimestamp = _timestamp;
-					sametimecount = 0;
-		        }
-		    }
-		    else {
-		       previoustimestamp = _timestamp;
-			   sametimecount = 0
-		    }
-			if (courierData.flag == "S" || sametimecount > 5 ) {
-			*/
 			
             if (courierData.flag == "S") {
                 stopWorkout();
@@ -1150,16 +1118,24 @@ function onErrorData(event){
     else {
         $("#console").prepend("<br/>UNCAUGHT ERROR EVENT: " + err);
         //showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
-		if (err.indexOf("dyld: lazy symbol binding failed: Symbol not found: _IOBluetoothLocalDeviceReadSupportedFeatures") !== -1) {
+		/*if (err.indexOf("dyld: lazy symbol binding failed: Symbol not found: _IOBluetoothLocalDeviceReadSupportedFeatures") !== -1) {
 			$("#console").prepend("<br/> FIX OSX 10.8: " + err);
 			if (air.Capabilities.os.indexOf("10.8") > 0) {// "Mac OS 10.6.8") {
+				
+				
 				var snowfile = air.File.applicationDirectory.resolvePath("lib/_midcfixsnowleopard.command");
+				var triedalready = get_from_localStorage('triediobluetoothfix');
 				
-				snowfile.openWithDefaultApplication();
-				initCourier();
-				
+				if (triedalready === "yes") {
+					alert("tried this fix already");
+				}
+				else {
+				    add_to_localStorage('triediobluetoothfix', "yes");
+                    snowfile.openWithDefaultApplication();
+                    
+				}
 			}
-		}
+		}*/
 
     
     
@@ -1288,12 +1264,21 @@ function processCourierData(){//this method is called every 20 seconds
 	showConnected();
     
 }
-function stopWorkout(temp_workout_row){
-	showMessage(appLang[currLang]["msg_workout_ended"]);
-    clearInterval(processDataInterval);
+function stopWorkout(temp_workout_row, custom_message){
+	
+	
+    //show custom Message
+    if (typeof custom_message !== "undefined") {
+		showMessage(custom_message);
+	}
+	else {
+	   showMessage(appLang[currLang]["msg_workout_ended"]);
+	}
+	
+	clearInterval(processDataInterval);
     
 	//add to storage
-    if (typeof temp_workout_row !== "undefined") {
+    if ((typeof temp_workout_row !== "undefined") || (temp_workout_row !== 0)) {
 		workoutData.push(temp_workout_row);
 	}
     
