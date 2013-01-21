@@ -214,7 +214,7 @@ function hideMessage(){
 
 function showBTLoading(){
 
-    air.trace("\n show loading");
+    //**air.trace("\n show loading");
     $("#console").prepend("<br/> show loading state ");
     //set the text to connecting...
     $(".lbl_bt").text(appLang[currLang]["lbl_bt_search"]);
@@ -225,7 +225,7 @@ function showBTLoading(){
 
 function showDisconnected(){
     //stopthatnonsense();
-    air.trace("\n show disconnected");
+    //**air.trace("\n show disconnected");
     $("#console").prepend("<br/> show disconnected state");
     BTCONNECTED = false;
 
@@ -245,7 +245,7 @@ function showConnected(){
     if ($(".alert_message p").html().indexOf(appLang[currLang]["msg_bt_pc_retry"]) !== -1) {
         hideMessage();
     }
-    air.trace("\n show connected");
+    //**air.trace("\n show connected");
     $("#console").prepend("<br/> show connected state");
 
     if (courier_nativeProcess.running && BTCONNECTED) {
@@ -292,7 +292,7 @@ function assignEventHandlers(env){
                     $(".tab_link").click();
                     if ((appData.Steps_Total + appData.Calories_Total + appData.Distance_Total + appData.Time_Total) > 1) {
                         //woot we have data
-                        air.trace("we have data");
+                        //**air.trace("we have data");
                     }
                     else {
                         showMessage(appLang[currLang]["msg_no_treadmill_7days"]);
@@ -306,19 +306,19 @@ function assignEventHandlers(env){
             });//END populateData(function(){
         });//END doSignIn(function(){
     });//END $('#signin').click(function(){
-    $('.close_app').live("click", function(){
+    $(document).on("click",'.close_app', function(){
         //alert("close");
         doSignOut();
     });
-    $('#exit').live("click", function(){
+    $(document).on("click",'#exit', function(){
         justQuit();
     });
     
-    $('.connectAgain').live("click", function(){
+    $(document).on("click",'.connectAgain', function(){
         hideMessage();
         initCourier();
     });
-    $(".doBluetooth").live("click", function(){
+    $(document).on("click",".doBluetooth", function(){
         if (!courier_nativeProcess.running) {
             showMessage(appLang[currLang]["msg_treadmill_connect"] + " <input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
         }
@@ -327,11 +327,11 @@ function assignEventHandlers(env){
     });
     
     //forgot my password link click
-    $('#reminder_link').live('click', function(){
+    $(document).on('click','#reminder_link', function(){
         openExternalURL(FORGOT_PWD_URL);
         
     });
-    $("#logtoserver").live("click", function(e){
+    $(document).on("click","#logtoserver", function(e){
 		//send to server
 		var data = "logdata=" + $("#console").html();
 		
@@ -346,7 +346,7 @@ function assignEventHandlers(env){
 		e.preventDefault();
 	});
     
-    $(".pull_tab").live("click", function(){
+    $(document).on("click",".pull_tab", function(){
         if ($(".pull_tab").hasClass("close_inner")) {
             $(".inner").hide("fast", function(){
                 $(".pull_tab").addClass("close_timer").removeClass("close_inner");
@@ -384,7 +384,7 @@ function assignEventHandlers(env){
         return false;
     });
     
-    $(".close_message, .close_message_bt").live("click", function(){
+    $(document).on("click",".close_message, .close_message_bt", function(){
         hideMessage();
         return false;
     });
@@ -416,21 +416,21 @@ function assignEventHandlers(env){
         $(".settings_menu").removeClass("settings_menu_on");
         return false;
     });
-    $(".translate").live("click", function(){
+    $(document).on("click",".translate", function(){
         currLang = $(this).attr("rel");
         translateTo($(this).attr("rel"));
         $(".settings_menu").removeClass("settings_menu_on");
         return false;
     });
-    $(".do_sync").live("click", function(){
+    $(document).on("click",".do_sync", function(){
         doSync(false);// quit app = false
         return false;
     });
-    $(".doPromptSync").live("click", function(){
+    $(document).on("click",".doPromptSync", function(){
         doSync(true);//quit app = true
         return false;
     });
-    $(".justQuit").live("click", function(){
+    $(document).on("click",".justQuit", function(){
         justQuit();
         return false;
     });
@@ -438,7 +438,7 @@ function assignEventHandlers(env){
     $('#remember').click(function(){
         doRemember();
     });
-    $('.external_link').live('click', function(e){
+    $(document).on('click','.external_link', function(e){
         e.preventDefault();
         var url = $(this).attr('href');
         openExternalURL(url);
@@ -464,11 +464,11 @@ function keypressHandler(event){
 		var alt = e.altKey;
 		var ctrl = e.ctrlKey
 		var shift = e.shiftKey;
-		//air.trace("Key:" + key + "\nAlt:" + alt + "\nCtrl:" + ctrl + "\nShift:" + shift);
+		////**air.trace("Key:" + key + "\nAlt:" + alt + "\nCtrl:" + ctrl + "\nShift:" + shift);
 		
 		if(e.shiftKey && e.ctrlKey){
         /*if (e.which == 67) { //shift+c*/
-            air.trace("toggle console");
+            //**air.trace("toggle console");
             
             $("#console").toggle();
 			$("#console").find("#logtoserver").remove();
@@ -484,7 +484,7 @@ function keypressHandler(event){
             
 			if(!$("input").is(":focus")){
 				
-				air.trace("manually delete known address from local storage");
+				//**air.trace("manually delete known address from local storage");
             
 	            resetLocalStorage();
 	            
@@ -653,7 +653,7 @@ function checkJAVA(callback){
                 if (!courier_nativeProcess.running) {
                 
                     var msg = checkjava_nativeProcess.standardOutput.readUTFBytes(checkjava_nativeProcess.standardOutput.bytesAvailable);
-                    air.trace("check java output : ", msg);
+                    //**air.trace("check java output : ", msg);
                     
                     $("#console").prepend("<br/>checkJAVA file output : " + msg);
                     
@@ -706,11 +706,11 @@ function initCourier(){
     showBTLoading();	
 	
     
-    air.trace("\n initCourier \n");
+    //**air.trace("\n initCourier \n");
     $("#console").prepend("<br/><br/> --initCourier-- <br/>");
     
     if (courier_nativeProcess.running) {
-        //air.trace("\n already running from initCourier terminate IT \n");
+        ////**air.trace("\n already running from initCourier terminate IT \n");
         //$("#console").prepend("<br/> already running from initCourier KILL IT ");
         //courier_nativeProcess.exit(true);
         //return;
@@ -721,7 +721,7 @@ function initCourier(){
     
         checkjava_nativeProcess.exit();
         $("#console").prepend("<br/>javapath found: " + _path_to_java);
-        air.trace("javapath found: ", _path_to_java);
+        //**air.trace("javapath found: ", _path_to_java);
         
         if (_path_to_java.indexOf("java") === -1) {
         
@@ -743,12 +743,12 @@ function initCourier(){
         if (!courier_nativeProcess.running) {
         
             var java_file = new air.File(_path_to_java); //PATH TO JAVA
-            //air.trace("java path", java_file.nativePath);
+            ////**air.trace("java path", java_file.nativePath);
             $("#console").prepend("<br/> java path: " + java_file.nativePath);
             
             if (air.NativeProcess.isSupported) {
                 //showMessage("<small>Found Java, Attempting to Connect to Treadmill Desk...</small>");
-                //air.trace("native process supported");
+                ////**air.trace("native process supported");
                 
                 $("#console").prepend("<br/> attempt to run courier.jar");
                 
@@ -785,7 +785,7 @@ function initCourier(){
                     nativeProcessStartupInfo.executable = java_file;
                     nativeProcessStartupInfo.arguments = processArgs;
                     
-                    air.trace("args: ", processArgs);
+                    //**air.trace("args: ", processArgs);
                     
                     $("#console").prepend("<br/> args: " + processArgs);
                     
@@ -835,7 +835,7 @@ function initCourier(){
                     }
                     else {
                     
-                        air.trace("try np start:", e.message);
+                        //**air.trace("try np start:", e.message);
                         $("#console").prepend("<br/>UGLY CATCH try np start: " + e.message);
                         //showMessage("<small>ERROR: Please copy and send me your console Shift+c </small>");
                         showDisconnected();
@@ -906,12 +906,12 @@ function sendCourierMessage(message){
 
     if (courier_nativeProcess.running) {
     
-        air.trace("process running send message: " + message);
+        //**air.trace("process running send message: " + message);
         courier_nativeProcess.standardInput.writeMultiByte(message, "utf-8");
         
     }
     else {
-        air.trace("process not running:" + message);
+        //**air.trace("process not running:" + message);
     }
 }
 
@@ -921,18 +921,18 @@ var COURIER_HEALTH_CHECK_TIMEOUT = 0;
 function doHealthCheck(){
     
 	
-    //air.trace("courier message: ", msg);
+    ////**air.trace("courier message: ", msg);
     if (COURIER_HEALTH_CHECK_TIMEOUT == 0) {
         
         //From the moment courier receives its first message, 
         //we want to check its status at 30 seconds, to prevent a limbo state
         COURIER_HEALTH_CHECK_TIMEOUT = setTimeout(function(){
             $("#console").prepend("<br/> 30 SECOND HEALTH CHECK");
-			air.trace("dohealthcheck");
+			//**air.trace("dohealthcheck");
             
             if (BTCONNECTED) {
                 //ALL IS GOOD
-                air.trace("healthcheck: courier is CONNECTED");
+                //**air.trace("healthcheck: courier is CONNECTED");
                 $("#console").prepend("<br/>healthcheck: courier is CONNECTED");
             }
             else {
@@ -940,7 +940,7 @@ function doHealthCheck(){
                 if (courier_nativeProcess.running) {
                     //WAIT: COURIER IS NOT CONNECTED BUT IT IS RUNNING... WE MUST BE IN LIMBO
                     
-                    air.trace("\nhealthcheck: courier NOT CONNECTED but runnning terminate IT \n");
+                    //**air.trace("\nhealthcheck: courier NOT CONNECTED but runnning terminate IT \n");
                     $("#console").prepend("<br/>healthcheck: courier NOT CONNECTED but runnning terminate IT ");
                     courier_nativeProcess.exit(true);
                     
@@ -950,7 +950,7 @@ function doHealthCheck(){
                 }
                 else {
 					
-                    air.trace("\nhealthcheck: courier NOT CONNECTED and NOT RUNNING \n");
+                    //**air.trace("\nhealthcheck: courier NOT CONNECTED and NOT RUNNING \n");
                     $("#console").prepend("<br/>healthcheck: courier NOT CONNECTED and NOT RUNNING  ");
                     showDisconnected();
                 }
@@ -972,7 +972,7 @@ function onOutputData(){
     if (msg.indexOf("CONNECTED") !== -1) {
         BTCONNECTED = true;
         showConnected();
-        air.trace("GOT CONNECT FROM COURIER ", msg);
+        //**air.trace("GOT CONNECT FROM COURIER ", msg);
         $("#console").prepend("<br/> GOT CONNECT FROM COURIER: " + msg);
         
         //WRITE ADDRESS TO LOCAL STORAGE
@@ -1017,7 +1017,7 @@ function onOutputData(){
     
         BTCONNECTED = true;
         
-        air.trace("dtF courier msg: ", msg);
+        //**air.trace("dtF courier msg: ", msg);
         //$("#console").prepend("<br/> dtF courier msg: " + msg);
         try {
             
@@ -1041,14 +1041,14 @@ function onOutputData(){
             
         } 
         catch (e) {
-            air.trace("catch parse error:", e.message);
+            //**air.trace("catch parse error:", e.message);
             $("#console").prepend("<br/> catch parse error: " + e.message);
         }
         
     }
     else {
 		if (msg.length > 3) {
-			air.trace("courier message: ", msg);
+			//**air.trace("courier message: ", msg);
 			//**$("#console").prepend("<br/>else courier message: " + msg);
 		}
     }
@@ -1065,7 +1065,7 @@ function onErrorData(event){
 	
     var err = courier_nativeProcess.standardError.readUTFBytes(courier_nativeProcess.standardError.bytesAvailable);
     
-    air.trace("ERROR EVT-", err);
+    //**air.trace("ERROR EVT-", err);
     $("#console").prepend("<br/> ERROR EVT: " + err);
     
     //$(".lbl_bt").text(appLang[currLang]["lbl_bt_off"]);
@@ -1104,8 +1104,8 @@ function onErrorData(event){
 
 function onExit(event){
 	
-    air.trace("Process exited with ", event.exitCode);
-	air.trace("courier is DEAD");
+    //**air.trace("Process exited with ", event.exitCode);
+	//**air.trace("courier is DEAD");
 	processCourierData();
 	
 	
@@ -1120,7 +1120,7 @@ function onExit(event){
         //lets try it again
 		delete_from_localStorage('known_address');
 		$("#console").prepend("<br/> ILLEGAL_ADDRESS_ERROR");
-		air.trace("ILLEGAL_ADDRESS_ERROR");
+		//**air.trace("ILLEGAL_ADDRESS_ERROR");
 		
         initCourier();
     }
@@ -1142,7 +1142,7 @@ function initWorkoutData(){
     showConnected();
     //get from localStorage if it exists
     workoutData = get_from_localStorage("workoutData");
-    air.trace("initWorkoutData", workoutData);
+    //**air.trace("initWorkoutData", workoutData);
     $("#console").prepend("<br/> init Workout Data: " + workoutData);
     
     if (workoutData !== null) {
@@ -1159,7 +1159,7 @@ var previous_pause = false;
 function processCourierData(){//this method is called every 20 seconds
     
 	if (workoutData == "empty") {
-		air.trace("ZERO BAIL");
+		//**air.trace("ZERO BAIL");
 	   return false;
 	}
 	
@@ -1210,7 +1210,7 @@ function processCourierData(){//this method is called every 20 seconds
             
             workoutData.push(temp_workout_row);
             
-            air.trace("\n processCourierData: workout_row:", JSON.stringify(temp_workout_row));
+            //**air.trace("\n processCourierData: workout_row:", JSON.stringify(temp_workout_row));
             
             
             delete_from_localStorage("workoutData");
@@ -1353,11 +1353,11 @@ function resetCourierData(){
 
 function populateData(callback){
 
-    //air.trace("in popdata", appData);
+    ////**air.trace("in popdata", appData);
     
     getDataFrom(APPDATA_URL + ID_NUMBER, "", function(response){
     
-        air.trace("popdataback ", response);
+        //**air.trace("popdataback ", response);
         $("#console").prepend("<br/> data from server: " + response);
         
         appData = JSON.parse(response);
@@ -1612,7 +1612,7 @@ function getAppDescriptor(callback){
 			$("#wrapper").fadeIn("slow", function(){
 				var msg_new_version_available = appLang[currLang]["msg_new_version_available"].replace("12345", newAppVersion);
 				
-				$("#update_prompt").prepend("<p>"+msg_new_version_available+"</p>").fadeIn("fast");
+				$("#update_prompt").prepend("<p style='padding:10px;'>"+msg_new_version_available+"</p>").fadeIn("fast");
 				
 				$("#update_no").click(function(){
 					
@@ -1629,12 +1629,6 @@ function getAppDescriptor(callback){
 			});
 			
 			
-			/*if (confirm("New version (" + newAppVersion + ") is available. Would you like to download and install it?")) {
-				do_update(appDesc.appVersion[OS]);
-			}
-			else {
-				callback.call();
-			}*/
 		}
 		else {
 		
@@ -1644,7 +1638,7 @@ function getAppDescriptor(callback){
 }
 function do_update(downloadurl){
 	
-    air.trace("starting app update:", downloadurl);
+    //**air.trace("starting app update:", downloadurl);
 	
 	$("#console").prepend("<br/> Starting APP UPDATE.. ");
 	
@@ -1669,10 +1663,10 @@ function doSignIn(callback){
     data = "lname=" + escape(username) + "&password=" + escape(password);//we should encypt this... httpsFTW
     getDataFrom(LOGIN_URL, data, function(response){
     
-        //air.trace("back", response);
+        ////**air.trace("back", response);
         return_data = response.split("|");
         ID_NUMBER = return_data[1];
-        //air.trace("#" + ID_NUMBER);
+        ////**air.trace("#" + ID_NUMBER);
         
         //air.trace(return_data[0]);
         
@@ -1764,7 +1758,7 @@ function doSync(quit_app){
             
             getDataFrom(IHPPROCESS_URL + ID_NUMBER, data, function(response){
                 
-                air.trace("response from process: ", response);
+                //**air.trace("response from process: ", response);
                 $("#console").prepend("<br/> sync response from server: " + response);
                 
                 delete_from_localStorage("workoutData");
@@ -1841,7 +1835,7 @@ function removeUser(){
 }
 
 function getDataFrom(url, data, callback, logit){
-    air.trace("getdatafromurl: " + url, " -data: " + data);
+    //**air.trace("getdatafromurl: " + url, " -data: " + data);
     
 	if (typeof logit === "undefined") {
 		$("#console").prepend("<br/> make server call: " + url + " -data: " + data);
@@ -1855,7 +1849,7 @@ function getDataFrom(url, data, callback, logit){
     request.data = data;
     loader = new air.URLLoader();
     loader.addEventListener(air.Event.COMPLETE, function(event){
-        air.trace("loader.addEventListener: ", event.target.data);
+        //**air.trace("loader.addEventListener: ", event.target.data);
         
         //MOVE ON
         callback(event.target.data);
@@ -1865,7 +1859,7 @@ function getDataFrom(url, data, callback, logit){
     });
     // loader callback function	
     loader.addEventListener(air.IOErrorEvent.IO_ERROR, function(event){
-        air.trace("loader.addEventListener: ", event.text);
+        //**air.trace("loader.addEventListener: ", event.text);
         $("#console").prepend("<br/> server call ERROR: " + event.text);
         
         //TODO: Call help. Do nothing
@@ -1881,7 +1875,7 @@ function getDataFrom(url, data, callback, logit){
     catch (error) {
 		var connecterrormsg = appLang[currLang]["msg_cant_contact_server"] ? appLang[currLang]["msg_cant_contact_server"] : "Unable to contact Server!";
         alert(connecterrormsg);
-        air.trace("sync process error: ", error.message);
+        //**air.trace("sync process error: ", error.message);
         $("#console").prepend("<br/> sync error: " + error.message);
         callback(error.message);
     }
@@ -1895,7 +1889,7 @@ function getDataFrom(url, data, callback, logit){
 //@param keyname
 //@param string value
 function add_to_localStorage(keyname, value){
-    //**air.trace("add_to_localStorage: " + keyname + "=" + value);
+    //**//**air.trace("add_to_localStorage: " + keyname + "=" + value);
     //**$("#console").prepend("<br/> add_to_localStorage: " + keyname + "=" + value);
     
     var data = new air.ByteArray();
@@ -1914,7 +1908,7 @@ function get_from_localStorage(keyname){
     if (value !== null) {
         return_val = value.readUTFBytes(value.bytesAvailable);
     }
-    //**air.trace("get_from_localStorage: " + keyname + "=" + return_val);
+    //**//**air.trace("get_from_localStorage: " + keyname + "=" + return_val);
     //**$("#console").prepend("<br/> get_from_localStorage: " + keyname + "=" + return_val);
     
     return return_val;
@@ -1934,7 +1928,7 @@ function install_JRE(){
 //delete from local storage
 //@param key name
 function delete_from_localStorage(keyname){
-    //**air.trace("delete_from_localStorage: " + keyname);
+    //**//**air.trace("delete_from_localStorage: " + keyname);
     //**$("#console").prepend("<br/> delete_from_localStorage: " + keyname);
     air.EncryptedLocalStore.removeItem(keyname);
 }
