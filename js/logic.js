@@ -749,8 +749,8 @@ function initCourier(){
                 $("#console").prepend("<br/> attempt to run courier.jar");
                 
 				//Courier2.1.2.jar
-                //var np_file = air.File.applicationDirectory.resolvePath("CourierService.jar");
-				var np_file = air.File.applicationDirectory.resolvePath("Courier2.1.2.jar");
+                var np_file = air.File.applicationDirectory.resolvePath("CourierService.jar");
+				//var np_file = air.File.applicationDirectory.resolvePath("Courier2.1.2.jar");
                 
                 var _address = get_from_localStorage("known_address");
                 if (_address == null || (_address.indexOf(":") == -1) ) { // check ":" for address missing channel.
@@ -770,6 +770,8 @@ function initCourier(){
                 
                 var processArgs = new air.Vector["<String>"]();
                 processArgs.push("-jar");
+				
+				
                 //processArgs.push("-d32"); //FORCE 32bit mode
                 processArgs.push(np_file.nativePath);
                 
@@ -1030,13 +1032,13 @@ function onOutputData(){
 		}
 			
 			
-			if (OS == "win") {
-				clearTimeout(listenTimeout);
-				//if I receive no messages in 5 seconds, assume I am dead
-				listenTimeout = setTimeout(function(){
-					stopWorkout(0, appLang[currLang]["msg_bluetooth_signal_disconnected"] + " <br/><input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
-				}, 5000);
-			}
+			//if (OS == "win") {
+			clearTimeout(listenTimeout);
+			//if I receive no messages in 5 seconds, assume I am dead
+			listenTimeout = setTimeout(function(){
+				stopWorkout(0, appLang[currLang]["msg_bluetooth_signal_disconnected"] + " <br/><input class='connectAgain button' type='button' value='" + appLang[currLang]["btn_yes"] + "'/><input class='close_message_bt button' type='button' value='" + appLang[currLang]["btn_no"] + "' />");
+			}, 5000);
+			//}
 			
             if (courierData.flag == "S") {
                 stopWorkout();
@@ -1179,7 +1181,7 @@ function processCourierData(){//this method is called every 20 seconds
         "cal": courierData.calories,
         "steps": courierData.steps,
         "speed": courierData.speed.whole + "." + courierData.speed.fraction,
-        "dist": distance_whole_fraction + "", //courierData.distance.whole + "." + distance_fraction,
+        "dist": distance_whole_fraction.toFixed(2) + "", //courierData.distance.whole + "." + distance_fraction,
         "watt": "",
         "flag": courierData.flag,
         "displayunits": courierData.uom ? "E" : "M", //machine reports 0=metric or 1=imperial,
